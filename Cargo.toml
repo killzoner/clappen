@@ -3,7 +3,7 @@ authors = ["killzoner"]
 edition = "2021"
 name = "clappen"
 resolver = "2"
-version = "0.1.0"
+version = "0.1.1"
 
 description = "Clap flatten prefix macro"
 documentation = "https://docs.rs/clappen"
