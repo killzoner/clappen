@@ -10,7 +10,7 @@ Integrate flatten prefix in your `clap` parsers easily.
 
 For more details, see:
 
-- [examples](https://github.com/killzoner/clappen/tree/master/cli/examples)
+- [examples](https://github.com/killzoner/clappen/tree/master/examples)
 
 ## Basic usage
 
@@ -160,5 +160,6 @@ Making `clappen_command` required for all `flatten` items avoids having to think
 
 ## Special thanks
 
-- Big up to [@dtolnay](https://github.com/dtolnay) and its wonderful work in `syn`, `quote` and `paste`.
+- Big up to [@dtolnay](https://github.com/dtolnay) and its wonderful work in `syn`, `quote` and `paste`.\
+  The initial implementation used `paste` but it is sadly now [unmaintained](https://github.com/dtolnay/paste/commit/6a302522990cbfd9de4e0c61d91854622f7b2999).
 - Kudos to [@epage](https://github.com/epage) for tireless maintaining `clap` and all its great features.
