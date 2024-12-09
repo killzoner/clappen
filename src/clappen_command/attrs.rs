@@ -90,7 +90,7 @@ impl Attributes {
         field_ident: &Ident,
         field_type: &Type,
     ) -> (TokenStream, TokenStream) {
-        let apply = self.apply.to_owned().clone();
+        let apply = &self.apply;
         let nested_prefix = camel_case(prefix(&[
             self.prefix.as_str(),
             default_prefix,

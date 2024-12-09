@@ -1,14 +1,43 @@
-[workspace]
-members = ["clappen", "cli"]
-package = { edition = "2021", version = "0.0.1" }
+[package]
+authors = ["killzoner"]
+edition = "2021"
+name = "clappen"
 resolver = "2"
+version = "0.1.0"
 
-[workspace.dependencies]
-clap = { version = "4.5.23", default-features = false }
-macrotest = { version = "1.0.13", default-features = false }
-paste = { version = "1.0.15", default-features = false }
+documentation = "https://docs.rs/clappen"
+keywords = ["macros", "clap", "flatten", "prefix"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/killzoner/clappen"
+
+[lib]
+proc-macro = true
+
+[dependencies]
 proc-macro2 = { version = "1.0.92", default-features = false }
 quote = { version = "1.0.37", default-features = false }
-syn = { version = "2.0.90", default-features = false }
-trybuild = { version = "1.0.101", default-features = false }
-trycmd = { version = "0.15.8", default-features = false }
+syn = { version = "2.0.90", features = [
+  "clone-impls", # for clone() debug only, ideally should be not used
+  "full",
+  "parsing",
+  "printing",
+  "proc-macro",
+], default-features = false }
+
+[dev-dependencies]
+clap = { version = "4.5.23", default-features = true, features = [
+  "derive",
+  "env",
+  "std",
+] }
+macrotest = { version = "1.0.13", default-features = false }
+paste = { version = "1.0.15", default-features = false }
+trybuild = { version = "1.0.101", features = ["diff"] }
+trycmd = { version = "0.15.8", default-features = false, features = [
+  "color-auto",
+  "diff",
+  "examples",
+] }
+
+[features]
+default = []
