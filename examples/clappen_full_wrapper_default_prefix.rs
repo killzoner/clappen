@@ -13,7 +13,7 @@ mod log {
 mod m1 {
     /// A test command line
     #[derive(clap::Parser, Debug, Clone)]
-    #[command(version, about)]
+    #[command(version)]
     pub struct ServerOptions {
         // Log level without default prefix
         //

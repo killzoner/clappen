@@ -5,6 +5,7 @@ name = "clappen"
 resolver = "2"
 version = "0.1.0"
 
+description = "Clap flatten prefix macro"
 documentation = "https://docs.rs/clappen"
 keywords = ["macros", "clap", "flatten", "prefix"]
 license = "MIT OR Apache-2.0"

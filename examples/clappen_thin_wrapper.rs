@@ -14,7 +14,7 @@ nested!("test1");
 
 /// A test command line
 #[derive(clap::Parser, Debug, Clone)]
-#[command(version, about)]
+#[command(version)]
 pub struct ServerOptions {
     /// Address to connect to.
     ///

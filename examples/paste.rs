@@ -95,7 +95,7 @@ cli_nested_config_with_prefix!(Bis);
 cli_nested_config_with_prefix!(Third);
 
 #[derive(Parser, Debug, Clone)]
-#[command(version, about)]
+#[command(version)]
 struct Cli {
     #[command(flatten)]
     config: NestedStructOptions,
