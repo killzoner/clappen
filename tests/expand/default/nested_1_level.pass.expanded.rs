@@ -1,5 +1,3 @@
-/// Macros used for nested struct definition : []
-pub struct MyStruct {}
 fn main() {
     mod __inner_nested {
         /// Macros used for nested struct definition : []

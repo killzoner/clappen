@@ -103,14 +103,14 @@ For example, if this was not required, you might write this
 
 ```rust
 #[clappen::clappen(export = nested)]
-mod nested {
-    #[derive(clap::Args, Debug, Clone)]
+mod m {
+    #[derive(clap::Args)]
     pub struct Nested {}
 }
 
 #[clappen::clappen(export = copyable_opts)]
 mod m {
-    #[derive(clap::Parser, Debug, Clone)]
+    #[derive(clap::Parser)]
     #[command(version, about)]
     pub struct CopyableOptions {
         #[command(flatten)]
@@ -124,23 +124,22 @@ But then if you copy paste this and turn it to a reusable parser, you get this
 ```rust
 #[clappen::clappen(export = nested)]
 mod m {
-    #[derive(clap::Args, Debug, Clone)]
+    #[derive(clap::Args)]
     pub struct Nested {}
 }
 
 #[clappen::clappen(export = copyable_opts)]
 mod m {
-    #[derive(clap::Parser, Debug, Clone)]
-    #[command(version, about)]
+    #[derive(clap::Args)]
     pub struct CopyableOptions {
         #[command(flatten)]
         nested: Nested,
     }
 }
 
-#[clappen::clappen(export = prefix)]
+#[clappen::clappen(export = parser)]
 mod m {
-    #[derive(clap::Parser, Debug, Clone)]
+    #[derive(clap::Parser)]
     #[command(version, about)]
     pub struct Options {
         #[command(flatten)]

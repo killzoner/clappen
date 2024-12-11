@@ -17,7 +17,10 @@ impl ProcessItem for ItemImpl {
         let item = &self;
         let mut self_ty = item.self_ty.to_token_stream();
 
-        let prefix = helper::prefix(&[default_prefix.as_str(), attrs_prefix.as_str()]);
+        let prefix = helper::snake_case(helper::prefix(&[
+            default_prefix.as_str(),
+            attrs_prefix.as_str(),
+        ]));
 
         // handle impl ty prefix
         if !prefix.is_empty() {

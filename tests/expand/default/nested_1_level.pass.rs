@@ -3,8 +3,6 @@ mod nested {
     pub struct MyStruct {}
 }
 
-nested!(); // define default nested struct
-
 #[clappen::clappen(export = prefixed_struct_generator)]
 mod m1 {
     pub struct ServerOptions {

@@ -12,6 +12,12 @@ mod tests {
         pub struct Level {
             pub level: String,
         }
+
+        impl Level {
+            pub fn another_nested_function(&self) -> String {
+                self.level.clone()
+            }
+        }
     }
 
     nested!(); // define default nested struct
@@ -53,7 +59,9 @@ mod tests {
             fn a_function(&self) -> String {
                 format!("url: {}, say_hello: {:?}", self.url, self.say_hello)
             }
-            fn another_function(&self) {}
+            fn another_function(&self) -> String {
+                self.log.another_nested_function()
+            }
         }
 
         impl ServerOptions {
@@ -68,7 +76,7 @@ mod tests {
 
         let a = MyPrefixServerOptions {
             my_prefix_log: __inner_my_prefix_log::MyPrefixLogLevel {
-                my_prefix_log_level: "".into(),
+                my_prefix_log_level: "warn".into(),
             },
             my_prefix_url: "url a".into(),
             my_prefix_say_hello: Some(false),
@@ -79,12 +87,12 @@ mod tests {
         };
 
         assert_eq!(a.a_function(), "url: url a, say_hello: Some(false)");
-        a.another_function();
+        assert_eq!(a.another_function(), "warn");
         a.a_third_function_in_second_impl_block();
 
         let b = SecondMyPrefixServerOptions {
             second_my_prefix_log: __inner_second_my_prefix_log::SecondMyPrefixLogLevel {
-                second_my_prefix_log_level: "".into(),
+                second_my_prefix_log_level: "info".into(),
             },
             second_my_prefix_url: "url b".into(),
             second_my_prefix_say_hello: Some(true),
@@ -97,7 +105,7 @@ mod tests {
         };
 
         assert_eq!(b.a_function(), "url: url b, say_hello: Some(true)");
-        b.another_function();
+        assert_eq!(b.another_function(), "info");
         b.a_third_function_in_second_impl_block();
     }
 }

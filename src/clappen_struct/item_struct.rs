@@ -20,7 +20,10 @@ impl ProcessItem for ItemStruct {
         let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
         let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
 
-        let prefix = helper::prefix(&[default_prefix.as_str(), struct_prefix.as_str()]);
+        let prefix = helper::snake_case(helper::prefix(&[
+            default_prefix.as_str(),
+            struct_prefix.as_str(),
+        ]));
 
         // handle struct prefix
         if !prefix.is_empty() {

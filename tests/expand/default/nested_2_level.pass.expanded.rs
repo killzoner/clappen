@@ -1,23 +1,28 @@
-mod __inner_nested {
-    /// Macros used for nested struct definition : []
-    /// Struct with prefix 'Level2', default_prefix: ''
-    pub struct Level2Nested2 {}
-}
-/// Macros used for nested struct definition : [nested2]
-pub struct Nested1 {
-    nested: __inner_nested::Level2Nested2,
-}
 fn main() {
     mod __inner_nested {
         mod __inner_level1_nested {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'Level1Level2', default_prefix: ''
-            pub struct Level1Level2Nested2 {}
+            pub struct Level1Level2Nested2 {
+                level1_level2_id: String,
+            }
+            /// Fields with prefix: [id]
+            impl Level1Level2Nested2 {
+                pub fn another_nested_function_2(&self) -> String {
+                    self.level1_level2_id.clone()
+                }
+            }
         }
         /// Macros used for nested struct definition : [nested2]
         /// Struct with prefix 'Level1', default_prefix: ''
         pub struct Level1Nested1 {
-            Level1_nested: __inner_level1_nested::Level1Level2Nested2,
+            level1_nested: __inner_level1_nested::Level1Level2Nested2,
+        }
+        /// Fields with prefix: [nested]
+        impl Level1Nested1 {
+            pub fn another_nested_function_1(&self) -> String {
+                self.level1_nested.another_nested_function_2()
+            }
         }
     }
     /// Macros used for nested struct definition : [nested1]
@@ -41,7 +46,9 @@ fn main() {
                 res
             })
         }
-        fn another_function(&self) {}
+        pub fn another_nested_function(&self) -> String {
+            self.nested.another_nested_function_1()
+        }
     }
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
@@ -50,12 +57,26 @@ fn main() {
         mod __inner_test_level1_nested {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'TestLevel1Level2', default_prefix: ''
-            pub struct TestLevel1Level2Nested2 {}
+            pub struct TestLevel1Level2Nested2 {
+                test_level1_level2_id: String,
+            }
+            /// Fields with prefix: [id]
+            impl TestLevel1Level2Nested2 {
+                pub fn another_nested_function_2(&self) -> String {
+                    self.test_level1_level2_id.clone()
+                }
+            }
         }
         /// Macros used for nested struct definition : [nested2]
         /// Struct with prefix 'TestLevel1', default_prefix: ''
         pub struct TestLevel1Nested1 {
-            TestLevel1_nested: __inner_test_level1_nested::TestLevel1Level2Nested2,
+            test_level1_nested: __inner_test_level1_nested::TestLevel1Level2Nested2,
+        }
+        /// Fields with prefix: [nested]
+        impl TestLevel1Nested1 {
+            pub fn another_nested_function_1(&self) -> String {
+                self.test_level1_nested.another_nested_function_2()
+            }
         }
     }
     /// Macros used for nested struct definition : [nested1]
@@ -83,7 +104,9 @@ fn main() {
                 res
             })
         }
-        fn another_function(&self) {}
+        pub fn another_nested_function(&self) -> String {
+            self.test_nested.another_nested_function_1()
+        }
     }
     /// Fields with prefix: [url,say_hello,nested]
     impl TestServerOptions {

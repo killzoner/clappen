@@ -4,14 +4,26 @@ mod nested {
         #[clappen_command(apply = nested2, prefix = "level2")]
         nested: Nested2
     }
+
+    impl Nested1 {
+        pub fn another_nested_function_1(&self) -> String {
+            self.nested.another_nested_function_2()
+        }
+    }
 }
 
 #[clappen::clappen(export = nested2)]
 mod nested {
-    pub struct Nested2 {}
-}
+    pub struct Nested2 {
+        id: String
+    }
 
-nested1!(); // define default nested struct
+    impl Nested2 {
+        pub fn another_nested_function_2(&self) -> String {
+            self.id.clone()
+        }
+    }
+}
 
 #[clappen::clappen(export = prefixed_struct_generator)]
 mod m1 {
@@ -34,7 +46,9 @@ mod m1 {
         fn a_function(&self) -> String {
             format!("url: {}, say_hello: {:?}", self.url, self.say_hello)
         }
-        fn another_function(&self) {}
+        pub fn another_nested_function(&self) -> String {
+            self.nested.another_nested_function_1()
+        }
     }
 
     impl ServerOptions {
