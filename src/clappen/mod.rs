@@ -99,6 +99,26 @@ pub(crate) fn create_template(
         })
         .collect();
 
+    let fields_assignment: Vec<_> = struct_def.fields.iter().flat_map(|e| &e.ident).map(|i| {
+      quote! {let #i = self.#i;}
+    }).collect();
+    let base_struct_name = struct_def.ident.clone();
+    let span = base_struct_name.span();
+    let base_struct_prefixed_name = default_prefix.to_owned() + &base_struct_name.to_string();
+    let base_struct_prefixed = syn::Ident::new(&base_struct_prefixed_name, span);
+
+    let into_impl = quote! {
+      #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
+      impl Into<#base_struct_prefixed> for #base_struct_prefixed{
+        fn into(self) -> #base_struct_prefixed{
+          #(#fields_assignment)*
+          #base_struct_prefixed{
+            #(#fields)*
+          }
+        }
+      }
+    };
+
     let default = match default_prefix {
         e if e.is_empty() => {
             quote! {
@@ -141,6 +161,7 @@ pub(crate) fn create_template(
                 #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
                 #struct_def
                 #(#prefixed_item_impls)*
+                #into_impl
             };
         }
     }
