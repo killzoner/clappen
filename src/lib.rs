@@ -71,6 +71,7 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 /// - content should start with a `mod` definition (which is not used in generated code, so put whatever you want)
 ///     - `export` argument is required and defines the name of the exported macro
 ///     - `default_prefix` argument is optional: adds prefix to all fields if specified
+///     - `gen_into` argument is optional: makes generated structs impl Into<Base>, automatically generates base struct
 ///
 /// - fields can use `#[clappen_command(apply = <my_exported_macro_name>]` with `flatten` from `clap`
 ///   to reference already exported macros and generate a prefix

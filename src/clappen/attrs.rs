@@ -1,11 +1,12 @@
 use syn::spanned::Spanned;
-use syn::LitStr;
+use syn::{LitBool, LitStr};
 use syn::{meta::ParseNestedMeta, Ident, Result};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
     pub export: Option<Ident>,
     pub default_prefix: String,
+    pub gen_into: bool,
 }
 
 impl Attributes {
@@ -26,6 +27,16 @@ impl Attributes {
 
                 self.default_prefix = prefix.value();
 
+                Ok(())
+            }
+            "gen_into" => {
+                let val: bool = meta
+                                    .value()
+                                    .and_then(|v| v.parse())
+                                    .map(|v: LitBool| v.value())
+                                    .unwrap_or(true); // if provided without value, true
+
+                self.gen_into = val;
                 Ok(())
             }
             _ => Err(syn::Error::new(ident.span(), "unknown attribute")),
