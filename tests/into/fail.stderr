@@ -1,0 +1,15 @@
+error: unexpected end of macro invocation
+ --> tests/into/fail.rs:7:5
+  |
+1 | #[clappen::clappen(export = generate, gen_into)]
+  | ------------------------------------------------ when calling this macro
+...
+7 |     generate!()
+  |     ^^^^^^^^^^^ missing tokens in macro arguments
+  |
+note: while trying to match meta-variable `$prefix:literal`
+ --> tests/into/fail.rs:1:1
+  |
+1 | #[clappen::clappen(export = generate, gen_into)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  = note: this error originates in the attribute macro `clappen::clappen` (in Nightly builds, run with -Z macro-backtrace for more info)
