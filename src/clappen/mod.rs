@@ -99,6 +99,32 @@ pub(crate) fn create_template(
         })
         .collect();
 
+    let fields_assignment: Vec<_> = struct_def
+        .fields
+        .iter()
+        .flat_map(|e| &e.ident)
+        .map(|i| {
+            quote! {let #i = self.#i;}
+        })
+        .collect();
+    let base_struct_name = struct_def.ident.clone();
+    let span = base_struct_name.span();
+    let base_struct_prefixed_name = default_prefix.to_owned() + &base_struct_name.to_string();
+    let base_struct_prefixed = syn::Ident::new(&base_struct_prefixed_name, span);
+
+    let into_impl = quote! {
+        #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
+        #[allow(clippy::from_over_into)]
+        impl Into<#base_struct_prefixed> for #base_struct_prefixed{
+            fn into(self) -> #base_struct_prefixed{
+                #(#fields_assignment)*
+                #base_struct_prefixed{
+                    #(#fields)*
+                }
+            }
+        }
+    };
+
     let default = match default_prefix {
         e if e.is_empty() => {
             quote! {
@@ -129,6 +155,28 @@ pub(crate) fn create_template(
         }
     };
 
+    let base_prefixed = quote! {
+        #(#use_items)*
+        #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
+        #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
+        #struct_def
+        #(#prefixed_item_impls)*
+
+    };
+
+    if attrs.gen_into {
+        return quote! {
+            #[macro_export]
+            macro_rules! #export_macro{
+                ($prefix: literal) => {
+                    #base_prefixed
+                    #into_impl
+                }
+            }
+            #default
+        };
+    }
+
     quote! {
         #[macro_export]
         macro_rules! #export_macro {
@@ -136,11 +184,7 @@ pub(crate) fn create_template(
                 #default
             };
             ($prefix: literal) => {
-                #(#use_items)*
-                #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
-                #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
-                #struct_def
-                #(#prefixed_item_impls)*
+                #base_prefixed
             };
         }
     }
