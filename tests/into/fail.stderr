@@ -4,7 +4,7 @@ error: unexpected end of macro invocation
 1 | #[clappen::clappen(export = generate, gen_into)]
   | ------------------------------------------------ when calling this macro
 ...
-7 |     generate!()
+7 |     generate!();
   |     ^^^^^^^^^^^ missing tokens in macro arguments
   |
 note: while trying to match meta-variable `$prefix:literal`
