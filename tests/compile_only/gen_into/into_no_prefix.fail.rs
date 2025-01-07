@@ -4,5 +4,5 @@ mod generate{
 }
 // This macro doesn't work with no argument when gen_into is provided
 fn main() {
-    generate!()
+    generate!();
 }

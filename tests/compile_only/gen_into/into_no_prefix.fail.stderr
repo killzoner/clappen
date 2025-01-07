@@ -1,14 +1,14 @@
 error: unexpected end of macro invocation
- --> tests/into/fail.rs:7:5
+ --> tests/compile_only/gen_into/into_no_prefix.fail.rs:7:5
   |
 1 | #[clappen::clappen(export = generate, gen_into)]
   | ------------------------------------------------ when calling this macro
 ...
-7 |     generate!()
+7 |     generate!();
   |     ^^^^^^^^^^^ missing tokens in macro arguments
   |
 note: while trying to match meta-variable `$prefix:literal`
- --> tests/into/fail.rs:1:1
+ --> tests/compile_only/gen_into/into_no_prefix.fail.rs:1:1
   |
 1 | #[clappen::clappen(export = generate, gen_into)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

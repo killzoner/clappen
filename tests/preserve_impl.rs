@@ -99,8 +99,10 @@ mod tests {
     #[test]
     fn generic() {
         let s_vec = ["Howdy", " ", "There"];
-        let a = GenericStruct{iter: s_vec.iter()};
-        let b = FirstGenericStruct{first_iter: s_vec.iter()};
+        let a = GenericStruct { iter: s_vec.iter() };
+        let b = FirstGenericStruct {
+            first_iter: s_vec.iter(),
+        };
         assert_eq!(a.foo(), b.foo());
         assert_eq!(a.bar(), b.bar());
         assert_eq!(a.baz(), b.baz());

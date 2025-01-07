@@ -1,6 +1,6 @@
 use syn::spanned::Spanned;
-use syn::{LitBool, LitStr};
 use syn::{meta::ParseNestedMeta, Ident, Result};
+use syn::{LitBool, LitStr};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
@@ -31,10 +31,10 @@ impl Attributes {
             }
             "gen_into" => {
                 let val: bool = meta
-                                    .value()
-                                    .and_then(|v| v.parse())
-                                    .map(|v: LitBool| v.value())
-                                    .unwrap_or(true); // if provided without value, true
+                    .value()
+                    .and_then(|v| v.parse())
+                    .map(|v: LitBool| v.value())
+                    .unwrap_or(true); // if provided without value, true
 
                 self.gen_into = val;
                 Ok(())

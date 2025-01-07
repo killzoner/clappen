@@ -22,7 +22,7 @@ fn into_test() {
         two_item1: 0,
         two_item2: String::from("Hello"),
     };
-    let compare = SimpleStruct{
+    let compare = SimpleStruct {
         item1: 0,
         item2: String::from("Hello"),
     };
@@ -30,10 +30,4 @@ fn into_test() {
     let two_into: SimpleStruct = two.into();
     assert_eq!(one_into, compare);
     assert_eq!(two_into, compare);
-}
-
-#[test]
-fn into_fail() {
-    let t = trybuild::TestCases::new();
-    t.compile_fail("tests/into/*.rs");
 }
