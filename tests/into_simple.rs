@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[clappen::clappen(export = generate, gen_into)]
 mod generate {
     #[derive(Debug, PartialEq)]

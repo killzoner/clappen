@@ -1,5 +1,6 @@
+use crate::helper;
 use attrs::Attributes;
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::Item;
 
@@ -104,22 +105,55 @@ pub(crate) fn create_template(
         .iter()
         .flat_map(|e| &e.ident)
         .map(|i| {
-            quote! {let #i = self.#i;}
+            let field = syn::Ident::new(
+                &helper::snake_case(helper::prefix(&[&i.to_string(), default_prefix])),
+                Span::call_site(),
+            );
+            quote! {let #field = self.#i.into();}
         })
         .collect();
-    let base_struct_name = struct_def.ident.clone();
-    let span = base_struct_name.span();
-    let base_struct_prefixed_name = default_prefix.to_owned() + &base_struct_name.to_string();
-    let base_struct_prefixed = syn::Ident::new(&base_struct_prefixed_name, span);
+
+    let fields_assignments_bis: Vec<_> = struct_def
+        .fields
+        .iter()
+        .flat_map(|e| &e.ident)
+        .map(|i| {
+            let field = syn::Ident::new(
+                &helper::snake_case(helper::prefix(&[&i.to_string(), default_prefix])),
+                Span::call_site(),
+            );
+
+            field
+        })
+        .enumerate()
+        .map(|(index, e)| {
+            // don't add a comma if it's last ident
+            if index == struct_def.fields.len() - 1 {
+                e.to_token_stream()
+            } else {
+                quote! {#e,}
+            }
+        })
+        .collect();
+
+    let base_struct_name = &struct_def.ident;
+    let base_struct_prefixed_name = syn::Ident::new(
+        &helper::camel_case(helper::prefix(&[
+            &base_struct_name.to_string(),
+            &default_prefix,
+        ])),
+        Span::call_site(),
+    );
+    let struct_prefixed = syn::Ident::new(&base_struct_name.to_string(), Span::call_site());
 
     let into_impl = quote! {
         #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
         #[allow(clippy::from_over_into)]
-        impl Into<#base_struct_prefixed> for #base_struct_prefixed{
-            fn into(self) -> #base_struct_prefixed{
+        impl Into<#base_struct_prefixed_name> for #struct_prefixed{
+            fn into(self) -> #base_struct_prefixed_name{
                 #(#fields_assignment)*
-                #base_struct_prefixed{
-                    #(#fields)*
+                #base_struct_prefixed_name{
+                    #(#fields_assignments_bis)*
                 }
             }
         }
@@ -161,13 +195,13 @@ pub(crate) fn create_template(
         #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
         #struct_def
         #(#prefixed_item_impls)*
-
     };
 
+    // create base struct by default if gen_into is requested
     if attrs.gen_into {
         return quote! {
             #[macro_export]
-            macro_rules! #export_macro{
+            macro_rules! #export_macro {
                 ($prefix: literal) => {
                     #base_prefixed
                     #into_impl

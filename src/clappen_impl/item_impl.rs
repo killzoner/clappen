@@ -1,4 +1,3 @@
-use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::str::FromStr;
@@ -30,41 +29,39 @@ impl ProcessItem for ItemImpl {
             .filter(|a| matches!(a.style, syn::AttrStyle::Outer))
             .collect();
 
+        // Handle generics and traits
         let (impl_generics, _, where_clause) = self.generics.split_for_impl();
         let trait_tokens = self
             .trait_
             .clone()
             .map(|(not, path, f)| quote! {#not #path #f});
+
         let Self {
             defaultness,
             unsafety,
             impl_token,
             ..
         } = &self;
+
+        // validate usage
         let (ident, generics) = if let syn::Type::Path(p) = *item.self_ty.clone() {
             if p.path.segments.len() != 1 {
-                return Err(syn::Error::new(
-                    Span::call_site(),
-                    "path must only have length of 1",
-                ));
+                return Err(syn::Error::new(p.span(), "path must only have length of 1"));
             }
             if let Some(seg) = p.path.segments.last() {
                 let seg = seg.clone();
                 (seg.ident, seg.arguments)
             } else {
-                return Err(syn::Error::new(
-                    Span::call_site(),
-                    "Emtpy path for impl type",
-                ));
+                return Err(syn::Error::new(p.span(), "Emtpy path for impl type"));
             }
         } else {
             return Err(syn::Error::new(
-                Span::call_site(),
+                item.span(),
                 "Impl type can only be a simple path",
             ));
         };
-        let before_type = quote! {#(#outer_attrs)* #defaultness #unsafety #impl_token #impl_generics #trait_tokens};
 
+        let before_type = quote! {#(#outer_attrs)* #defaultness #unsafety #impl_token #impl_generics #trait_tokens};
         let after_type = quote! {#generics #where_clause};
 
         // handle impl ty prefix
@@ -72,7 +69,7 @@ impl ProcessItem for ItemImpl {
             let mut ident_str = ident.to_string();
             ident_str.insert_str(0, &helper::camel_case(prefix.to_owned()));
 
-            self_ty = Ident::new(&ident_str, ident_str.span()).to_token_stream();
+            self_ty = Ident::new(&ident_str, ident.span()).to_token_stream();
         }
 
         // handle renaming of self fields references
