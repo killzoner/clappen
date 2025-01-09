@@ -1,10 +1,10 @@
 use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote, ToTokens};
+use quote::{quote, ToTokens};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::spanned::Spanned;
-use syn::{Ident, LitStr, Path, Token, Type};
+use syn::{Ident, LitStr, Path, Token, Type, TypePath};
 
-use crate::helper::{camel_case, prefix, snake_case};
+use crate::helper::{camel_case, get_ident_from_path, macro_module_name, prefix};
 
 #[derive(Clone)]
 pub enum NestedAttributes {
@@ -87,48 +87,54 @@ impl Attributes {
         &self,
         default_prefix: &str,
         struct_prefix: &str,
-        field_ident: &Ident,
         field_type: &Type,
-    ) -> (TokenStream, TokenStream) {
+    ) -> syn::Result<(TokenStream, TokenStream)> {
         let apply = &self.apply;
         let nested_prefix = camel_case(prefix(&[
             self.prefix.as_str(),
             default_prefix,
             struct_prefix,
         ]));
-        let module_name = Self::macro_module_name(field_ident);
+        let command_prefix = self.prefix.as_str();
+        let (type_ident, _) = if let Type::Path(TypePath {path, .. }) = field_type{
+            get_ident_from_path(path)?
+        }else{
+            return Err(syn::Error::new(field_type.span(), format!("Field type must be Path, found, {:?}", field_type)));
+        };
+        let module_name = macro_module_name(type_ident, &nested_prefix);
         let new_type_full_ref =
-            Self::new_full_type_definition(&module_name, &nested_prefix, field_type);
-
-        (
+            Self::new_full_type_definition(&module_name, &nested_prefix, field_type)?;
+        let default_prefix = if !default_prefix.is_empty() {quote! {#default_prefix}} else {quote! {}};
+        let struct_prefix = if !struct_prefix.is_empty() {quote! {#struct_prefix}} else {quote! {}};
+        Ok((
             quote! {
-                    mod #module_name {
-                        #apply!(#nested_prefix);
-                    }
+                #[allow(non_snake_case)]
+                mod #module_name {
+                    #apply!(@field #nested_prefix #struct_prefix #default_prefix #command_prefix);
+                }
             },
             new_type_full_ref,
-        )
+        ))
     }
 
     fn new_full_type_definition(
         module_name: &Ident,
         nested_prefix: &str,
         field_type: &Type,
-    ) -> TokenStream {
+    ) -> syn::Result<TokenStream> {
         // allow for fully qualified type notation, needed for $crate::something
         let field_type: Ident = match &field_type {
             Type::Path(e) => match e.path.segments.last() {
                 Some(e) => e.ident.to_owned().clone(),
                 None => {
-                    return syn::Error::new(
+                    return Err(syn::Error::new(
                         field_type.span(),
                         format!("cannot get ident out of {}", field_type.to_token_stream()),
-                    )
-                    .into_compile_error()
+                    ));
                 }
             },
             _ => {
-                return syn::Error::new(field_type.span(), "unknown attribute").into_compile_error()
+                return Err(syn::Error::new(field_type.span(), "unknown attribute"));
             }
         };
 
@@ -137,15 +143,9 @@ impl Attributes {
             Span::call_site(),
         );
 
-        quote! {
+        Ok(quote! {
             #module_name::#field_type
-        }
+        })
     }
 
-    fn macro_module_name(field_ident: &Ident) -> Ident {
-        let snake_lower_field_ident = snake_case(field_ident.to_string());
-        let module_name = format_ident!("__inner_{}", snake_lower_field_ident,);
-
-        module_name
-    }
 }

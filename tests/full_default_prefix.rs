@@ -75,15 +75,15 @@ mod tests {
         prefixed_struct_generator!("second");
 
         let a = MyPrefixServerOptions {
-            my_prefix_log: __inner_my_prefix_log::MyPrefixLogLevel {
+            my_prefix_log: __inner_MyPrefixLogLevel::MyPrefixLogLevel {
                 my_prefix_log_level: "warn".into(),
             },
             my_prefix_url: "url a".into(),
             my_prefix_say_hello: Some(false),
             my_prefix_nested_default: MyStruct {},
-            my_prefix_nested: __inner_my_prefix_nested::MyPrefixTestMyStruct {},
-            my_prefix_nested1: __inner_my_prefix_nested1::MyPrefixTest1MyStruct {},
-            my_prefix_nested2: __inner_my_prefix_nested2::MyPrefixTest2MyStruct {},
+            my_prefix_nested: __inner_MyPrefixTestMyStruct::MyPrefixTestMyStruct {},
+            my_prefix_nested1: __inner_MyPrefixTest1MyStruct::MyPrefixTest1MyStruct {},
+            my_prefix_nested2: __inner_MyPrefixTest2MyStruct::MyPrefixTest2MyStruct {},
         };
 
         assert_eq!(a.a_function(), "url: url a, say_hello: Some(false)");
@@ -91,17 +91,17 @@ mod tests {
         a.a_third_function_in_second_impl_block();
 
         let b = SecondMyPrefixServerOptions {
-            second_my_prefix_log: __inner_second_my_prefix_log::SecondMyPrefixLogLevel {
+            second_my_prefix_log: __inner_SecondMyPrefixLogLevel::SecondMyPrefixLogLevel {
                 second_my_prefix_log_level: "info".into(),
             },
             second_my_prefix_url: "url b".into(),
             second_my_prefix_say_hello: Some(true),
             second_my_prefix_nested_default: MyStruct {},
-            second_my_prefix_nested: __inner_second_my_prefix_nested::SecondMyPrefixTestMyStruct {},
+            second_my_prefix_nested: __inner_SecondMyPrefixTestMyStruct::SecondMyPrefixTestMyStruct {},
             second_my_prefix_nested1:
-                __inner_second_my_prefix_nested1::SecondMyPrefixTest1MyStruct {},
+                __inner_SecondMyPrefixTest1MyStruct::SecondMyPrefixTest1MyStruct {},
             second_my_prefix_nested2:
-                __inner_second_my_prefix_nested2::SecondMyPrefixTest2MyStruct {},
+                __inner_SecondMyPrefixTest2MyStruct::SecondMyPrefixTest2MyStruct {},
         };
 
         assert_eq!(b.a_function(), "url: url b, say_hello: Some(true)");

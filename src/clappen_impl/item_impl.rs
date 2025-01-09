@@ -1,12 +1,14 @@
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
+use syn::TypePath;
 use std::str::FromStr;
 use syn::spanned::Spanned;
 use syn::{parse_quote, Ident, ItemImpl};
 
 use super::ProcessItem;
 use crate::helper;
+use crate::helper::get_ident_from_path;
 
 impl ProcessItem for ItemImpl {
     fn process(
@@ -41,22 +43,8 @@ impl ProcessItem for ItemImpl {
             impl_token,
             ..
         } = &self;
-        let (ident, generics) = if let syn::Type::Path(p) = *item.self_ty.clone() {
-            if p.path.segments.len() != 1 {
-                return Err(syn::Error::new(
-                    Span::call_site(),
-                    "path must only have length of 1",
-                ));
-            }
-            if let Some(seg) = p.path.segments.last() {
-                let seg = seg.clone();
-                (seg.ident, seg.arguments)
-            } else {
-                return Err(syn::Error::new(
-                    Span::call_site(),
-                    "Emtpy path for impl type",
-                ));
-            }
+        let (ident, generics) = if let syn::Type::Path(TypePath{path: p, ..}) = *item.self_ty.clone() {
+            get_ident_from_path(&p)?
         } else {
             return Err(syn::Error::new(
                 Span::call_site(),
