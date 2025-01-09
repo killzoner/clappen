@@ -3,6 +3,8 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::Item;
 
+use crate::helper::prefix_struct_ident;
+
 pub(crate) mod attrs;
 
 pub(crate) fn create_template(
@@ -99,31 +101,8 @@ pub(crate) fn create_template(
         })
         .collect();
 
-    let fields_assignment: Vec<_> = struct_def
-        .fields
-        .iter()
-        .flat_map(|e| &e.ident)
-        .map(|i| {
-            quote! {let #i = self.#i;}
-        })
-        .collect();
-    let base_struct_name = struct_def.ident.clone();
-    let span = base_struct_name.span();
-    let base_struct_prefixed_name = default_prefix.to_owned() + &base_struct_name.to_string();
-    let base_struct_prefixed = syn::Ident::new(&base_struct_prefixed_name, span);
-
-    let into_impl = quote! {
-        #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
-        #[allow(clippy::from_over_into)]
-        impl Into<#base_struct_prefixed> for #base_struct_prefixed{
-            fn into(self) -> #base_struct_prefixed{
-                #(#fields_assignment)*
-                #base_struct_prefixed{
-                    #(#fields)*
-                }
-            }
-        }
-    };
+    let mut base_struct_prefixed = struct_def.ident.clone();
+    prefix_struct_ident(&mut base_struct_prefixed, "", default_prefix);
 
     let default = match default_prefix {
         e if e.is_empty() => {
@@ -168,10 +147,16 @@ pub(crate) fn create_template(
         return quote! {
             #[macro_export]
             macro_rules! #export_macro{
-                ($prefix: literal) => {
+                ($prefix:literal) => {
                     #base_prefixed
-                    #into_impl
-                }
+                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$prefix, #base_struct_prefixed]);
+
+                };
+                (@field $prefix:literal $($prefixes:literal)+) => {
+                    clappen::__clappen_use!([$($prefixes, )+ #base_struct_prefixed]);
+                    #base_prefixed
+                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$($prefixes, )+ #base_struct_prefixed]);
+                };
             }
             #default
         };
@@ -180,6 +165,9 @@ pub(crate) fn create_template(
     quote! {
         #[macro_export]
         macro_rules! #export_macro {
+            (@field $prefix: literal $($__li: literal)+) => {
+                #base_prefixed
+            };
             () => {
                 #default
             };

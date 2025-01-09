@@ -22,7 +22,7 @@ fn into_test() {
         two_item1: 0,
         two_item2: String::from("Hello"),
     };
-    let compare = SimpleStruct{
+    let compare = SimpleStruct {
         item1: 0,
         item2: String::from("Hello"),
     };
@@ -35,5 +35,11 @@ fn into_test() {
 #[test]
 fn into_fail() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("tests/into/*.rs");
+    t.compile_fail("tests/into/*.fail.rs");
+}
+
+#[test]
+fn expan_test() {
+    let args = &["--all-features"];
+    macrotest::expand_args("tests/into/**/*.rs", args);
 }

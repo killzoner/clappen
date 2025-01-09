@@ -60,9 +60,9 @@ mod tests {
             url: "url a".into(),
             say_hello: Some(false),
             nested_default: MyStruct {},
-            nested: __inner_nested::TestMyStruct {},
-            nested1: __inner_nested1::Test1MyStruct {},
-            nested2: __inner_nested2::Test2MyStruct {},
+            nested: __inner_TestMyStruct::TestMyStruct {},
+            nested1: __inner_Test1MyStruct::Test1MyStruct {},
+            nested2: __inner_Test2MyStruct::Test2MyStruct {},
         };
 
         assert_eq!(a.a_function(), "url: url a, say_hello: Some(false)");
@@ -73,9 +73,9 @@ mod tests {
             second_url: "url b".into(),
             second_say_hello: Some(true),
             second_nested_default: MyStruct {},
-            second_nested: __inner_second_nested::SecondTestMyStruct {},
-            second_nested1: __inner_second_nested1::SecondTest1MyStruct {},
-            second_nested2: __inner_second_nested2::SecondTest2MyStruct {},
+            second_nested: __inner_SecondTestMyStruct::SecondTestMyStruct {},
+            second_nested1: __inner_SecondTest1MyStruct::SecondTest1MyStruct {},
+            second_nested2: __inner_SecondTest2MyStruct::SecondTest2MyStruct {},
         };
 
         assert_eq!(b.a_function(), "url: url b, say_hello: Some(true)");

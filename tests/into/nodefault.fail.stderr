@@ -1,5 +1,5 @@
 error: unexpected end of macro invocation
- --> tests/into/fail.rs:7:5
+ --> tests/into/nodefault.fail.rs:7:5
   |
 1 | #[clappen::clappen(export = generate, gen_into)]
   | ------------------------------------------------ when calling this macro
@@ -8,7 +8,7 @@ error: unexpected end of macro invocation
   |     ^^^^^^^^^^^ missing tokens in macro arguments
   |
 note: while trying to match meta-variable `$prefix:literal`
- --> tests/into/fail.rs:1:1
+ --> tests/into/nodefault.fail.rs:1:1
   |
 1 | #[clappen::clappen(export = generate, gen_into)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -14,10 +14,14 @@
 mod clappen;
 mod clappen_command;
 mod clappen_impl;
+mod clappen_into;
 mod clappen_struct;
+mod clappen_use;
 mod helper;
 
+use helper::{get_parents_from_prefixes, macro_module_name, prefix_ident_str};
 use proc_macro::TokenStream;
+use quote::quote;
 use syn::{parse_macro_input, ItemImpl, ItemMod, ItemStruct};
 
 #[doc(hidden)]
@@ -64,6 +68,111 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
     };
 
     expanded.into()
+}
+
+#[doc(hidden)]
+#[proc_macro]
+pub fn __clappen_use(input: TokenStream) -> TokenStream {
+    let cloned_args = input.clone();
+    let attrs = parse_macro_input!(cloned_args as clappen_use::Attributes);
+    let (_, parents) = get_parents_from_prefixes(&attrs.prefixes);
+    let len = parents.len();
+    let uses = parents.iter().enumerate().map(|(i, s)| {
+        let ident = syn::Ident::new(s, proc_macro2::Span::call_site());
+        let module_name = if i + 1 == len {
+            quote! {}
+        } else {
+            let name = macro_module_name(ident.clone(), "");
+            quote! {
+                #name::
+            }
+        };
+        quote! {
+            use super::#module_name #ident;
+        }
+    });
+    quote! {#(#uses)*}.into()
+}
+
+#[doc(hidden)]
+#[proc_macro]
+pub fn __into_impl(input: TokenStream) -> TokenStream {
+    let cloned_args = input.clone();
+    let mut attrs = clappen_into::Attributes::default();
+    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
+    parse_macro_input!(cloned_args with attrs_parser);
+    let prefix = attrs.prefixes.first().cloned().unwrap_or_default();
+    let (item_str, parents) = get_parents_from_prefixes(&attrs.prefixes);
+    // return debug_into(parents, attrs.prefixes, prefix);
+    let item_ident = proc_macro2::Ident::new(&item_str, proc_macro2::Span::call_site());
+    // Most readable iter transformation
+    let mut field_prefixes =
+        attrs
+            .prefixes
+            .iter()
+            .rev()
+            .skip(1)
+            .fold(Vec::new(), |mut vec, pre| {
+                let prev = vec.last().cloned().unwrap_or_default();
+                vec.push(prefix_ident_str(prev, pre, "", true));
+                vec
+            });
+    field_prefixes.reverse();
+    field_prefixes.push("".to_string()); // TODO: replace with default prefix
+    let intos = parents
+        .clone()
+        .into_iter()
+        .zip(field_prefixes.windows(2))
+        .map(|(p, sl)| {
+            let &[pre_from, pre_into] = &sl else {
+                unreachable!()
+            };
+            let prefix_fields = |pre: &str| -> Vec<_> {
+                attrs
+                    .fields
+                    .iter()
+                    .map(|f| prefix_ident_str(f, pre, "", true))
+                    .map(|s| syn::Ident::new(&s, proc_macro2::Span::call_site()))
+                    .collect()
+            };
+            let from_fields = prefix_fields(pre_from);
+            let into_fields = from_fields.iter().zip(prefix_fields(pre_into)).map(|(f,i)|{
+                quote! {
+                    #i: #f.into()
+                }
+            });
+
+            let ident = proc_macro2::Ident::new(&p, proc_macro2::Span::call_site());
+            quote! {
+                #[allow(clippy::from_over_into)]
+                impl Into<#ident> for #item_ident{
+                    fn into(self) -> #ident{
+                        let Self{#(#from_fields),*} = self;
+                        #ident{#(#into_fields),*}
+                    }
+                }
+            }
+        });
+    let _debug = debug_into(parents, attrs.prefixes, prefix);
+    quote! {
+        #(#intos)*
+
+    }
+    .into()
+}
+
+fn debug_into(
+    parents: Vec<String>,
+    prefixes: Vec<String>,
+    prefix: String,
+) -> proc_macro2::TokenStream {
+    let parent_len = parents.len();
+    let prefix_len = prefixes.len();
+    quote! {
+        static parents: [& str; #parent_len] = [#(#parents),*];
+        static prefixes: [& str; #prefix_len] = [#(#prefixes),*];
+        static prefix: & str = #prefix;
+    }
 }
 
 /// Generates the macro defining prefixed struct.
