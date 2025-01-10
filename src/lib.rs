@@ -118,7 +118,8 @@ pub fn __into_impl(input: TokenStream) -> TokenStream {
                 vec
             });
     field_prefixes.reverse();
-    field_prefixes.push("".to_string()); // TODO: replace with default prefix
+    field_prefixes.push(attrs.default_prefix);
+    let len = field_prefixes.len();
     let intos = parents
         .clone()
         .into_iter()

@@ -1,7 +1,7 @@
 use quote::ToTokens;
 use syn::meta::ParseNestedMeta;
 use syn::spanned::Spanned;
-use syn::ExprArray;
+use syn::{ExprArray, LitStr};
 
 use crate::helper::parse_prefixes;
 
@@ -9,6 +9,7 @@ use crate::helper::parse_prefixes;
 pub(crate) struct Attributes {
     pub fields: Vec<String>,
     pub prefixes: Vec<String>,
+    pub default_prefix: String,
 }
 
 impl Attributes {
@@ -30,6 +31,10 @@ impl Attributes {
             "prefixes" => {
                 let arr: ExprArray = meta.value()?.parse()?;
                 self.prefixes = parse_prefixes(arr)?
+            }
+            "default_prefix" => {
+                let str: LitStr = meta.value()?.parse()?;
+                self.default_prefix = str.value();
             }
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };

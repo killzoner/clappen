@@ -149,7 +149,7 @@ pub(crate) fn create_template(
             macro_rules! #export_macro{
                 ($prefix:literal) => {
                     #base_prefixed
-                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$prefix, #base_struct_prefixed]);
+                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$prefix, #base_struct_prefixed], default_prefix = #default_prefix);
 
                 };
                 (@field $prefix:literal $($prefixes:literal)+) => {
