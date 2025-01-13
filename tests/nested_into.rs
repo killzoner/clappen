@@ -1,16 +1,15 @@
-// cargo expand --test full
 #[allow(dead_code)]
 #[cfg(test)]
 mod tests {
-    #[clappen::clappen(export = nested)]
+    #[clappen::clappen(export = nested, gen_into)]
     mod nested {
+        #[derive(PartialEq, Debug)]
         pub struct MyStruct {}
     }
 
-    nested!(); // define default nested struct
-
-    #[clappen::clappen(export = prefixed_struct_generator)]
+    #[clappen::clappen(export = prefixed_struct_generator, gen_into)]
     mod m1 {
+        #[derive(PartialEq, Debug)]
         pub struct ServerOptions {
             /// Address to connect to.
             ///
@@ -53,9 +52,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        prefixed_struct_generator!();
         prefixed_struct_generator!("second");
-
         let a = ServerOptions {
             url: "url a".into(),
             say_hello: Some(false),
@@ -81,5 +78,18 @@ mod tests {
         assert_eq!(b.a_function(), "url: url b, say_hello: Some(true)");
         b.another_function();
         b.a_third_function_in_second_impl_block();
+
+        let c = SecondServerOptions {
+            second_url: "url a".into(),
+            second_say_hello: Some(false),
+            second_nested_default: MyStruct {},
+            second_nested: __inner_SecondTestMyStruct::SecondTestMyStruct {},
+            second_nested1: __inner_SecondTest1MyStruct::SecondTest1MyStruct {},
+            second_nested2: __inner_SecondTest2MyStruct::SecondTest2MyStruct {},
+        };
+        let c_into: ServerOptions = c.into();
+        assert_eq!(c_into, a);
     }
 }
+
+

@@ -2,14 +2,15 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Ident, ItemStruct, Token, Type};
+use syn::{ItemStruct, Token, Type};
 
 use super::{
     ProcessItem, FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY,
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
 };
 use crate::clappen_command::attrs::NestedAttributes;
-use crate::{clappen_command, helper};
+use crate::helper::{prefix_field_ident, prefix_struct_ident};
+use crate::clappen_command;
 
 impl ProcessItem for ItemStruct {
     fn process(
@@ -19,19 +20,7 @@ impl ProcessItem for ItemStruct {
     ) -> syn::Result<TokenStream> {
         let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
         let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
-
-        let prefix = helper::snake_case(helper::prefix(&[
-            default_prefix.as_str(),
-            struct_prefix.as_str(),
-        ]));
-
-        // handle struct prefix
-        if !prefix.is_empty() {
-            let mut ident = self.ident.to_string();
-            ident.insert_str(0, &helper::camel_case(prefix.clone()));
-
-            self.ident = Ident::new(&ident, ident.span());
-        }
+        prefix_struct_ident(&mut self.ident, &struct_prefix, &default_prefix);
 
         for field in self.fields.iter_mut() {
             // handle clappen_command arguments
@@ -88,33 +77,17 @@ impl ProcessItem for ItemStruct {
             }
 
             // handle fields prefix
-            let mut ident = match &field.ident {
-                Some(e) => e.to_string(),
-                None => {
-                    return Err(syn::Error::new(
-                        field.span(),
-                        "Ident field could not be parsed",
-                    ))
-                }
-            };
-
-            // field prefix
-            if !prefix.is_empty() {
-                ident.insert_str(0, format!("{}_", prefix).as_str());
-            }
-
-            field.ident = Some(Ident::new(&ident, ident.span()));
+            prefix_field_ident(&mut field.ident, &struct_prefix, &default_prefix)?;
 
             // Handle nested field definitions with macro uses.
-            if let (Some(command_attrs), Some(field_ident)) =
-                (clappen_command_attributes, &field.ident)
+            if let Some(command_attrs) =
+                clappen_command_attributes
             {
                 let (new_macro_call, new_type_full) = command_attrs.nested_macro_call(
                     default_prefix.as_str(),
                     struct_prefix.as_str(),
-                    field_ident,
                     &field.ty,
-                );
+                )?;
 
                 nested_macro_calls.push(new_macro_call);
                 nested_macro_uses.push(command_attrs);
@@ -163,3 +136,5 @@ impl ProcessItem for ItemStruct {
         })
     }
 }
+
+

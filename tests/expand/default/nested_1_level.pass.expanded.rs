@@ -1,10 +1,12 @@
 fn main() {
-    mod __inner_nested {
+    #[allow(non_snake_case)]
+    mod __inner_TestMyStruct {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'Test', default_prefix: ''
         pub struct TestMyStruct {}
     }
-    mod __inner_nested1 {
+    #[allow(non_snake_case)]
+    mod __inner_Test1MyStruct {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'Test1', default_prefix: ''
         pub struct Test1MyStruct {}
@@ -19,10 +21,10 @@ fn main() {
         say_hello: Option<bool>,
         /// A nested struct that needs a prefix.
         ///
-        nested: __inner_nested::TestMyStruct,
+        nested: __inner_TestMyStruct::TestMyStruct,
         /// A nested struct that needs another prefix.
         ///
-        nested1: __inner_nested1::Test1MyStruct,
+        nested1: __inner_Test1MyStruct::Test1MyStruct,
     }
     impl ServerOptions {
         fn a_function(&self) -> String {
@@ -38,12 +40,14 @@ fn main() {
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }
-    mod __inner_test_nested {
+    #[allow(non_snake_case)]
+    mod __inner_TestTestMyStruct {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'TestTest', default_prefix: ''
         pub struct TestTestMyStruct {}
     }
-    mod __inner_test_nested1 {
+    #[allow(non_snake_case)]
+    mod __inner_TestTest1MyStruct {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'TestTest1', default_prefix: ''
         pub struct TestTest1MyStruct {}
@@ -59,10 +63,10 @@ fn main() {
         test_say_hello: Option<bool>,
         /// A nested struct that needs a prefix.
         ///
-        test_nested: __inner_test_nested::TestTestMyStruct,
+        test_nested: __inner_TestTestMyStruct::TestTestMyStruct,
         /// A nested struct that needs another prefix.
         ///
-        test_nested1: __inner_test_nested1::TestTest1MyStruct,
+        test_nested1: __inner_TestTest1MyStruct::TestTest1MyStruct,
     }
     /// Fields with prefix: [url,say_hello,nested,nested1]
     impl TestServerOptions {

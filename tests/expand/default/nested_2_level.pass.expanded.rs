@@ -1,6 +1,8 @@
 fn main() {
-    mod __inner_nested {
-        mod __inner_level1_nested {
+    #[allow(non_snake_case)]
+    mod __inner_Level1Nested1 {
+        #[allow(non_snake_case)]
+        mod __inner_Level1Level2Nested2 {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'Level1Level2', default_prefix: ''
             pub struct Level1Level2Nested2 {
@@ -16,7 +18,7 @@ fn main() {
         /// Macros used for nested struct definition : [nested2]
         /// Struct with prefix 'Level1', default_prefix: ''
         pub struct Level1Nested1 {
-            level1_nested: __inner_level1_nested::Level1Level2Nested2,
+            level1_nested: __inner_Level1Level2Nested2::Level1Level2Nested2,
         }
         /// Fields with prefix: [nested]
         impl Level1Nested1 {
@@ -35,7 +37,7 @@ fn main() {
         say_hello: Option<bool>,
         /// A nested struct that needs a prefix.
         ///
-        nested: __inner_nested::Level1Nested1,
+        nested: __inner_Level1Nested1::Level1Nested1,
     }
     impl ServerOptions {
         fn a_function(&self) -> String {
@@ -53,8 +55,10 @@ fn main() {
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }
-    mod __inner_test_nested {
-        mod __inner_test_level1_nested {
+    #[allow(non_snake_case)]
+    mod __inner_TestLevel1Nested1 {
+        #[allow(non_snake_case)]
+        mod __inner_TestLevel1Level2Nested2 {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'TestLevel1Level2', default_prefix: ''
             pub struct TestLevel1Level2Nested2 {
@@ -70,7 +74,7 @@ fn main() {
         /// Macros used for nested struct definition : [nested2]
         /// Struct with prefix 'TestLevel1', default_prefix: ''
         pub struct TestLevel1Nested1 {
-            test_level1_nested: __inner_test_level1_nested::TestLevel1Level2Nested2,
+            test_level1_nested: __inner_TestLevel1Level2Nested2::TestLevel1Level2Nested2,
         }
         /// Fields with prefix: [nested]
         impl TestLevel1Nested1 {
@@ -90,7 +94,7 @@ fn main() {
         test_say_hello: Option<bool>,
         /// A nested struct that needs a prefix.
         ///
-        test_nested: __inner_test_nested::TestLevel1Nested1,
+        test_nested: __inner_TestLevel1Nested1::TestLevel1Nested1,
     }
     /// Fields with prefix: [url,say_hello,nested]
     impl TestServerOptions {

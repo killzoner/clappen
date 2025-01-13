@@ -3,6 +3,8 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::Item;
 
+use crate::helper::prefix_struct_ident;
+
 pub(crate) mod attrs;
 
 pub(crate) fn create_template(
@@ -99,6 +101,9 @@ pub(crate) fn create_template(
         })
         .collect();
 
+    let mut base_struct_prefixed = struct_def.ident.clone();
+    prefix_struct_ident(&mut base_struct_prefixed, "", default_prefix);
+
     let default = match default_prefix {
         e if e.is_empty() => {
             quote! {
@@ -129,18 +134,45 @@ pub(crate) fn create_template(
         }
     };
 
+    let base_prefixed = quote! {
+        #(#use_items)*
+        #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
+        #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
+        #struct_def
+        #(#prefixed_item_impls)*
+
+    };
+
+    if attrs.gen_into {
+        return quote! {
+            #[macro_export]
+            macro_rules! #export_macro{
+                ($prefix:literal) => {
+                    #base_prefixed
+                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$prefix, #base_struct_prefixed], default_prefix = #default_prefix);
+
+                };
+                (@field $prefix:literal $($prefixes:literal)+) => {
+                    clappen::__clappen_use!([$($prefixes, )+ #base_struct_prefixed]);
+                    #base_prefixed
+                    clappen::__into_impl!(fields = [#(#fields)*], prefixes = [$($prefixes, )+ #base_struct_prefixed]);
+                };
+            }
+            #default
+        };
+    }
+
     quote! {
         #[macro_export]
         macro_rules! #export_macro {
+            (@field $prefix: literal $($__li: literal)+) => {
+                #base_prefixed
+            };
             () => {
                 #default
             };
             ($prefix: literal) => {
-                #(#use_items)*
-                #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
-                #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
-                #struct_def
-                #(#prefixed_item_impls)*
+                #base_prefixed
             };
         }
     }
