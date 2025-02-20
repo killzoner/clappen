@@ -1,5 +1,5 @@
 use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{Ident, LitStr, Path, Token, Type};
@@ -124,11 +124,12 @@ impl Attributes {
                         field_type.span(),
                         format!("cannot get ident out of {}", field_type.to_token_stream()),
                     )
-                    .into_compile_error()
+                    .into_compile_error();
                 }
             },
             _ => {
-                return syn::Error::new(field_type.span(), "unknown attribute").into_compile_error()
+                return syn::Error::new(field_type.span(), "unknown attribute")
+                    .into_compile_error();
             }
         };
 

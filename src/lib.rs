@@ -18,7 +18,7 @@ mod clappen_struct;
 mod helper;
 
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, ItemImpl, ItemMod, ItemStruct};
+use syn::{ItemImpl, ItemMod, ItemStruct, parse_macro_input};
 
 #[doc(hidden)]
 #[proc_macro_attribute]

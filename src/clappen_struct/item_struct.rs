@@ -1,12 +1,12 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Ident, ItemStruct, Token, Type};
 
 use super::{
-    ProcessItem, FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY,
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
+    FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
 };
 use crate::clappen_command::attrs::NestedAttributes;
 use crate::{clappen_command, helper};
@@ -94,7 +94,7 @@ impl ProcessItem for ItemStruct {
                     return Err(syn::Error::new(
                         field.span(),
                         "Ident field could not be parsed",
-                    ))
+                    ));
                 }
             };
 
@@ -134,7 +134,7 @@ impl ProcessItem for ItemStruct {
                                 field.ident.to_token_stream(),
                                 field.ty.to_token_stream(),
                             ),
-                        ))
+                        ));
                     }
                 }
             }

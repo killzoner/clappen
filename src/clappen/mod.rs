@@ -1,6 +1,6 @@
 use attrs::Attributes;
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::Item;
 
 pub(crate) mod attrs;
@@ -62,7 +62,7 @@ pub(crate) fn create_template(
         Some(e) => e,
         None => {
             return syn::Error::new_spanned(&args, "clappen must have a unique struct definition")
-                .to_compile_error()
+                .to_compile_error();
         }
     };
 
