@@ -1,6 +1,6 @@
 use quote::ToTokens;
 use syn::spanned::Spanned;
-use syn::{meta::ParseNestedMeta, ExprArray, LitStr, Result};
+use syn::{ExprArray, LitStr, Result, meta::ParseNestedMeta};
 
 #[derive(Default)]
 pub(crate) struct Attributes {

@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use std::str::FromStr;
 use syn::spanned::Spanned;
-use syn::{parse_quote, Ident, ItemImpl};
+use syn::{Ident, ItemImpl, parse_quote};
 
 use super::ProcessItem;
 use crate::helper;

@@ -1,6 +1,6 @@
-use syn::spanned::Spanned;
 use syn::LitStr;
-use syn::{meta::ParseNestedMeta, Ident, Result};
+use syn::spanned::Spanned;
+use syn::{Ident, Result, meta::ParseNestedMeta};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
