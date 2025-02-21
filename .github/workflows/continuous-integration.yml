@@ -73,9 +73,11 @@ jobs:
       group: ${{ github.workflow }}-cargo-deny-checks-${{ github.event.pull_request.number || github.ref }}
     steps:
       - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with: 
+          toolchain: stable
+      - uses: taiki-e/cache-cargo-install-action@v2
         with:
-          # cargo deny -L error --workspace check bans advisories sources
-          command: check bans advisories sources
-          log-level: error
-          arguments: --workspace
+          tool: cargo-deny
+      - name: cargo deny
+        run: cargo deny -L error --workspace check bans advisories sources
