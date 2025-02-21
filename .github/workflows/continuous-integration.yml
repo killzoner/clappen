@@ -33,7 +33,10 @@ jobs:
           toolchain: stable
           components: clippy
       - run: cargo clippy --all --all-targets --all-features -- -D warnings
-      - uses: bnjbvr/cargo-machete@main # check unused dependencies
+      - uses: taiki-e/install-action@v2 # don't use taiki-e/cache-cargo-install-action, compiled version already available (https://github.com/taiki-e/install-action/blob/main/TOOLS.md)
+        with:
+          tool: cargo-machete
+      - run: cargo machete
   test:
     runs-on: ubuntu-latest
     concurrency:
@@ -42,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2 # don't use taiki-e/cache-cargo-install-action, compiled version already available (https://github.com/taiki-e/install-action/blob/main/TOOLS.md)
         with:
           tool: cargo-expand
       - run: cargo test
@@ -58,15 +61,14 @@ jobs:
           toolchain: stable
           components: rustfmt
       - run: cargo fmt --all
+      - uses: taiki-e/install-action@v2 # don't use taiki-e/cache-cargo-install-action, compiled version already available (https://github.com/taiki-e/install-action/blob/main/TOOLS.md)
+        with:
+          tool: taplo-cli@0.8.1
       - name: Run cargo sort
-        run : >
-          curl -L -s "https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz" | gunzip > taplo && 
-          chmod a+x taplo &&
-          ./taplo format
+        run : taplo format
       - name: Check for a diff
         run: git diff --exit-code
   cargo-deny-checks:
-    name: Check cargo deny rules
     runs-on: ubuntu-latest
     concurrency:
       cancel-in-progress: true
@@ -76,7 +78,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: 
           toolchain: stable
-      - uses: taiki-e/cache-cargo-install-action@v2
+      - uses: taiki-e/install-action@v2 # don't use taiki-e/cache-cargo-install-action, compiled version already available (https://github.com/taiki-e/install-action/blob/main/TOOLS.md)
         with:
           tool: cargo-deny
       - name: cargo deny
