@@ -31,7 +31,7 @@ clap = { version = "4.5.30", default-features = true, features = [
   "env",
   "std",
 ] }
-macrotest = { version = "1.0.13", default-features = false }
+macrotest = { version = "1.1.0", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 trybuild = { version = "1.0.103", features = ["diff"] }
 trycmd = { version = "0.15.9", default-features = false, features = [
