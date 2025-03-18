@@ -14,6 +14,7 @@
 mod clappen;
 mod clappen_command;
 mod clappen_impl;
+mod clappen_impl_ignore;
 mod clappen_struct;
 mod helper;
 
@@ -57,6 +58,29 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 
     use clappen_impl::ProcessItem;
     let expanded = item.process(attrs.default_prefix, attrs.prefix, attrs.prefixed_fields);
+
+    let expanded = match expanded {
+        Ok(e) => e,
+        Err(e) => e.to_compile_error(),
+    };
+
+    expanded.into()
+}
+
+/// Special macro to handle references to base type.
+#[proc_macro_attribute]
+pub fn clappen_impl_ignore(args: TokenStream, target: TokenStream) -> TokenStream {
+    // handle attributes
+    let cloned_args = args.clone();
+    let mut attrs = clappen_impl_ignore::attrs::Attributes::default();
+    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
+    parse_macro_input!(cloned_args with attrs_parser);
+
+    // handle fields
+    let mut item = parse_macro_input!(target as ItemImpl);
+
+    use clappen_impl_ignore::ProcessItem;
+    let expanded = item.process(attrs.ignore_self);
 
     let expanded = match expanded {
         Ok(e) => e,

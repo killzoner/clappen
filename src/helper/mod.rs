@@ -1,3 +1,6 @@
+use proc_macro2::Span;
+use syn::PathArguments;
+
 /// Prefix adds each prefix in order, checking for empty prefix.
 /// result is constructed using snake_case
 ///
@@ -52,4 +55,16 @@ pub(crate) fn camel_case(elt: String) -> String {
     }
 
     acc
+}
+
+pub(crate) fn get_ident_from_path(path: &syn::Path) -> syn::Result<(syn::Ident, PathArguments)> {
+    if let Some(seg) = path.segments.last() {
+        let seg = seg.clone();
+        Ok((seg.ident, seg.arguments))
+    } else {
+        Err(syn::Error::new(
+            Span::call_site(),
+            "Empty path for impl type",
+        ))
+    }
 }

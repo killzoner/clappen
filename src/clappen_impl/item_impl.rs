@@ -1,11 +1,14 @@
+use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use std::str::FromStr;
+use syn::TypePath;
 use syn::spanned::Spanned;
 use syn::{Ident, ItemImpl, parse_quote};
 
 use super::ProcessItem;
 use crate::helper;
+use crate::helper::get_ident_from_path;
 
 impl ProcessItem for ItemImpl {
     fn process(
@@ -22,12 +25,43 @@ impl ProcessItem for ItemImpl {
             attrs_prefix.as_str(),
         ]));
 
+        // Preserve surrounding impl tokens
+        let outer_attrs: Vec<_> = self
+            .attrs
+            .iter()
+            .filter(|a| matches!(a.style, syn::AttrStyle::Outer))
+            .collect();
+
+        let (impl_generics, _, where_clause) = self.generics.split_for_impl();
+        let trait_tokens = self
+            .trait_
+            .as_ref()
+            .map(|(not, path, f)| quote! {#not #path #f});
+        let Self {
+            defaultness,
+            unsafety,
+            impl_token,
+            ..
+        } = &self;
+        let (type_ident, generics) =
+            if let syn::Type::Path(TypePath { path: p, .. }) = item.self_ty.as_ref() {
+                get_ident_from_path(p)?
+            } else {
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    "Impl type can only be a simple path",
+                ));
+            };
+        let before_type = quote! {#(#outer_attrs)* #defaultness #unsafety #impl_token #impl_generics #trait_tokens};
+
+        let after_type = quote! {#generics #where_clause};
+
         // handle impl ty prefix
         if !prefix.is_empty() {
-            let mut ident = item.self_ty.to_token_stream().to_string();
-            ident.insert_str(0, &helper::camel_case(prefix.to_owned()));
+            let mut ident_str = type_ident.to_string();
+            ident_str.insert_str(0, &helper::camel_case(prefix.to_owned()));
 
-            self_ty = Ident::new(&ident, ident.span()).to_token_stream();
+            self_ty = Ident::new(&ident_str, ident_str.span()).to_token_stream();
         }
 
         // handle renaming of self fields references
@@ -51,7 +85,7 @@ impl ProcessItem for ItemImpl {
 
         Ok(quote! {
             #[doc=concat!(concat!(" Fields with prefix: [", #doc_prefixed_fields, "]"))]
-            impl #self_ty {
+            #before_type #self_ty #after_type{
                 #(#items)*
             }
         })
