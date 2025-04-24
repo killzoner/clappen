@@ -8,7 +8,7 @@ RUN set -eux && \
   echo "deb http://deb.debian.org/debian/ bookworm main non-free" | tee /etc/apt/sources.list && \
   rustup component add clippy && \
   rm Makefile && \
-  cargo install taplo-cli@0.8.1 && \
+  cargo install taplo-cli@0.9.3 && \
   cargo install cargo-machete && \
   rustup component add rustfmt && \
   rm -rf /var/lib/apt/lists/* && \
