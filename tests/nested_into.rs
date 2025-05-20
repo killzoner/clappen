@@ -6,7 +6,7 @@ mod tests {
         // #[derive(PartialEq, Debug)]
         pub struct MyStruct {}
 
-        #[clappen::clappen_impl_ignore(ignore_self = "crate::tests::MyStruct")]
+        #[clappen::clappen_impl_custom(ignore_self = "crate::tests::MyStruct")]
         #[allow(clippy::from_over_into)]
         impl Into<crate::tests::MyStruct> for crate::tests::MyStruct {
             fn into(self) -> crate::tests::MyStruct {
@@ -57,7 +57,7 @@ mod tests {
             fn a_third_function_in_second_impl_block(&self) {}
         }
 
-        #[clappen::clappen_impl_ignore(ignore_self = "crate::tests::ServerOptions")]
+        #[clappen::clappen_impl_custom(ignore_self = "crate::tests::ServerOptions")]
         #[allow(clippy::from_over_into)]
         impl Into<ServerOptions> for crate::tests::ServerOptions {
             fn into(self) -> crate::tests::ServerOptions {

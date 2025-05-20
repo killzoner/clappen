@@ -22,7 +22,7 @@ mod m1 {
         fn a_third_function_in_second_impl_block(&self) {}
     }
 
-    #[clappen::clappen_impl_ignore(ignore_self = "ServerOptions")]
+    #[clappen::clappen_impl_custom(ignore_self = "ServerOptions")]
     #[allow(clippy::from_over_into)]
     impl Into<ServerOptions> for ServerOptions {
         fn into(self) -> ServerOptions {

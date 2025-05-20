@@ -9,7 +9,7 @@ mod generate {
         item2: String,
     }
 
-    #[clappen::clappen_impl_ignore(ignore_self = "SimpleStruct")]
+    #[clappen::clappen_impl_custom(ignore_self = "SimpleStruct")]
     #[allow(clippy::from_over_into)]
     impl Into<SimpleStruct> for SimpleStruct {
         fn into(self) -> SimpleStruct {
