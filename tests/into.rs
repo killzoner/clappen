@@ -52,7 +52,7 @@ fn into_fail() {
 }
 
 #[test]
-fn expan_test() {
+fn expand_test() {
     let args = &["--all-features"];
     macrotest::expand_args("tests/into/**/*.rs", args);
 }
