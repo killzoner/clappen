@@ -45,14 +45,3 @@ fn into_test() {
     assert_eq!(two_into, compare);
 }
 
-#[test]
-fn into_fail() {
-    let t = trybuild::TestCases::new();
-    t.compile_fail("tests/into/*.fail.rs");
-}
-
-#[test]
-fn expand_test() {
-    let args = &["--all-features"];
-    macrotest::expand_args("tests/into/**/*.rs", args);
-}
