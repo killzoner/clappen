@@ -116,9 +116,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_bis = cli.cli_bis.new_nested_config();
     let config_third = cli.cli_third.new_nested_config();
 
-    println!("Config {:?}", config);
-    println!("Config bis {:?}", config_bis);
-    println!("Config third {:?}", config_third);
+    println!("Config {config:?}");
+    println!("Config bis {config_bis:?}");
+    println!("Config third {config_third:?}");
 
     Ok(())
 }

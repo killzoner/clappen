@@ -35,7 +35,7 @@ impl Parse for NestedAttributes {
             }
             e => Err(syn::Error::new(
                 keyword.span(),
-                format!("unknown attribute field '{}'", e),
+                format!("unknown attribute field '{e}'"),
             )),
         }
     }

@@ -8,7 +8,7 @@ pub(crate) fn prefix(prefixes: &[&str]) -> String {
         if e.is_empty() {
             e = prefix.to_string();
         } else if !prefix.is_empty() {
-            e = snake_case(format!("{}_{}", prefix, e));
+            e = snake_case(format!("{prefix}_{e}"));
         }
     }
 
