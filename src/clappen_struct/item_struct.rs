@@ -71,8 +71,7 @@ impl ProcessItem for ItemStruct {
                 return Err(syn::Error::new(
                     field.span(),
                     format!(
-                        "'{}' must be specified when #[command(flatten)] is provided for clap",
-                        FIELD_ATTR_CLAPPEN_COMMAND_APPLY,
+                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[command(flatten)] is provided for clap",
                     ),
                 ));
             }
@@ -81,8 +80,7 @@ impl ProcessItem for ItemStruct {
                 return Err(syn::Error::new(
                     field.span(),
                     format!(
-                        "'{}' must be specified when #[{}] is provided",
-                        FIELD_ATTR_CLAPPEN_COMMAND_APPLY, FIELD_ATTR_CLAPPEN_COMMAND,
+                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided",
                     ),
                 ));
             }
@@ -100,7 +98,7 @@ impl ProcessItem for ItemStruct {
 
             // field prefix
             if !prefix.is_empty() {
-                ident.insert_str(0, format!("{}_", prefix).as_str());
+                ident.insert_str(0, format!("{prefix}_").as_str());
             }
 
             field.ident = Some(Ident::new(&ident, ident.span()));
