@@ -14,13 +14,12 @@ fn main() {
         ///
         fn a_function(&self) -> String {
             ::alloc::__export::must_use({
-                let res = ::alloc::fmt::format(
+                ::alloc::fmt::format(
                     format_args!(
                         "url: {0}, say_hello: {1:?}", self.test_address, self
                         .test_config,
                     ),
-                );
-                res
+                )
             })
         }
     }

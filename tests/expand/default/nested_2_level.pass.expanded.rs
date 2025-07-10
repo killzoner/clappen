@@ -40,10 +40,9 @@ fn main() {
     impl ServerOptions {
         fn a_function(&self) -> String {
             ::alloc::__export::must_use({
-                let res = ::alloc::fmt::format(
+                ::alloc::fmt::format(
                     format_args!("url: {0}, say_hello: {1:?}", self.url, self.say_hello),
-                );
-                res
+                )
             })
         }
         pub fn another_nested_function(&self) -> String {
@@ -96,12 +95,11 @@ fn main() {
     impl TestServerOptions {
         fn a_function(&self) -> String {
             ::alloc::__export::must_use({
-                let res = ::alloc::fmt::format(
+                ::alloc::fmt::format(
                     format_args!(
                         "url: {0}, say_hello: {1:?}", self.test_url, self.test_say_hello,
                     ),
-                );
-                res
+                )
             })
         }
         pub fn another_nested_function(&self) -> String {
