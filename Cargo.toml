@@ -26,7 +26,7 @@ syn = { version = "2.0.104", features = [
 ], default-features = false }
 
 [dev-dependencies]
-clap = { version = "4.5.41", default-features = true, features = [
+clap = { version = "4.5.42", default-features = true, features = [
   "derive",
   "env",
   "std",
