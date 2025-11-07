@@ -33,7 +33,7 @@ clap = { version = "4.5.51", default-features = true, features = [
 ] }
 macrotest = { version = "1.2.0", default-features = false }
 paste = { version = "1.0.15", default-features = false }
-trybuild = { version = "1.0.113", features = ["diff"] }
+trybuild = { version = "1.0.114", features = ["diff"] }
 trycmd = { version = "0.15.10", default-features = false, features = [
   "color-auto",
   "diff",
