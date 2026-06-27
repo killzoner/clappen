@@ -1,7 +1,10 @@
+use proc_macro2::{Ident, Span};
+use quote::format_ident;
+
 /// Prefix adds each prefix in order, checking for empty prefix.
 /// result is constructed using snake_case
 ///
-pub(crate) fn prefix(prefixes: &[&str]) -> String {
+fn prefix(prefixes: &[&str]) -> String {
     let mut e: String = "".into();
 
     for prefix in prefixes {
@@ -16,7 +19,7 @@ pub(crate) fn prefix(prefixes: &[&str]) -> String {
 }
 
 // taken straight from paste crate (https://github.com/dtolnay/paste/blob/6a302522990cbfd9de4e0c61d91854622f7b2999/src/segment.rs#L176)
-pub(crate) fn snake_case(elt: String) -> String {
+fn snake_case(elt: String) -> String {
     let mut acc = String::new();
     let mut prev = '_';
     for ch in elt.chars() {
@@ -31,7 +34,7 @@ pub(crate) fn snake_case(elt: String) -> String {
 }
 
 // taken straight from paste crate (https://github.com/dtolnay/paste/blob/6a302522990cbfd9de4e0c61d91854622f7b2999/src/segment.rs#L176)
-pub(crate) fn camel_case(elt: String) -> String {
+fn camel_case(elt: String) -> String {
     let mut acc = String::new();
     let mut prev = '_';
     for ch in elt.chars() {
@@ -52,4 +55,28 @@ pub(crate) fn camel_case(elt: String) -> String {
     }
 
     acc
+}
+
+// snake_case prefix for a struct's fields at (default_prefix, struct_prefix)
+pub(crate) fn field_prefix(default_prefix: &str, struct_prefix: &str) -> String {
+    snake_case(prefix(&[default_prefix, struct_prefix]))
+}
+
+// prefix literal passed one level down to a nested field's generated macro
+pub(crate) fn nested_step_prefix(
+    command_prefix: &str,
+    default_prefix: &str,
+    struct_prefix: &str,
+) -> String {
+    camel_case(prefix(&[command_prefix, default_prefix, struct_prefix]))
+}
+
+// type/struct ident: prefix prepended (camelCased) to a base name
+pub(crate) fn prefixed_ident(prefix: &str, base: &str) -> Ident {
+    Ident::new(&camel_case(format!("{prefix}{base}")), Span::call_site())
+}
+
+// module wrapping a nested field's struct, e.g. __inner_my_field
+pub(crate) fn macro_module_name(field_ident: &str) -> Ident {
+    format_ident!("__inner_{}", snake_case(field_ident.to_string()))
 }

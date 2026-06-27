@@ -1,13 +1,13 @@
-use proc_macro2::{Span, TokenStream};
-use quote::{ToTokens, format_ident, quote};
+use proc_macro2::TokenStream;
+use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{Ident, LitStr, Path, Token, Type};
 
-use crate::helper::{camel_case, prefix, snake_case};
+use crate::helper;
 
 #[derive(Clone)]
-pub enum NestedAttributes {
+pub(crate) enum NestedAttributes {
     Apply(Path),
     Prefix(Option<String>),
 }
@@ -42,7 +42,7 @@ impl Parse for NestedAttributes {
 }
 
 #[derive(Clone)]
-pub struct Attributes {
+pub(crate) struct Attributes {
     pub apply: Path,
     pub prefix: String,
 }
@@ -91,18 +91,14 @@ impl Attributes {
         field_type: &Type,
     ) -> (TokenStream, TokenStream) {
         let apply = &self.apply;
-        let nested_prefix = camel_case(prefix(&[
-            self.prefix.as_str(),
-            default_prefix,
-            struct_prefix,
-        ]));
-        let module_name = Self::macro_module_name(field_ident);
+        let nested_prefix = helper::nested_step_prefix(&self.prefix, default_prefix, struct_prefix);
+        let module_name = helper::macro_module_name(&field_ident.to_string());
         let new_type_full_ref =
             Self::new_full_type_definition(&module_name, &nested_prefix, field_type);
 
         (
             quote! {
-                    mod #module_name {
+                    pub(crate) mod #module_name {
                         #apply!(#nested_prefix);
                     }
             },
@@ -133,20 +129,10 @@ impl Attributes {
             }
         };
 
-        let field_type = Ident::new(
-            &camel_case(format!("{}{}", nested_prefix, field_type.to_token_stream())),
-            Span::call_site(),
-        );
+        let field_type = helper::prefixed_ident(nested_prefix, &field_type.to_string());
 
         quote! {
             #module_name::#field_type
         }
-    }
-
-    fn macro_module_name(field_ident: &Ident) -> Ident {
-        let snake_lower_field_ident = snake_case(field_ident.to_string());
-        let module_name = format_ident!("__inner_{}", snake_lower_field_ident,);
-
-        module_name
     }
 }

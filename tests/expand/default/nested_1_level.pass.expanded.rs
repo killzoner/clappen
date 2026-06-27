@@ -1,10 +1,10 @@
 fn main() {
-    mod __inner_nested {
+    pub(crate) mod __inner_nested {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'Test', default_prefix: ''
         pub struct TestMyStruct {}
     }
-    mod __inner_nested1 {
+    pub(crate) mod __inner_nested1 {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'Test1', default_prefix: ''
         pub struct Test1MyStruct {}
@@ -37,12 +37,12 @@ fn main() {
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }
-    mod __inner_test_nested {
+    pub(crate) mod __inner_test_nested {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'TestTest', default_prefix: ''
         pub struct TestTestMyStruct {}
     }
-    mod __inner_test_nested1 {
+    pub(crate) mod __inner_test_nested1 {
         /// Macros used for nested struct definition : []
         /// Struct with prefix 'TestTest1', default_prefix: ''
         pub struct TestTest1MyStruct {}

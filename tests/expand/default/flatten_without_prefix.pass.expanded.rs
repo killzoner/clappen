@@ -1,5 +1,5 @@
 fn main() {
-    mod __inner_nested {
+    pub(crate) mod __inner_nested {
         /// Macros used for nested struct definition : []
         /// Struct with prefix '', default_prefix: ''
         pub struct MyStruct {}
