@@ -1,6 +1,6 @@
 fn main() {
-    mod __inner_nested {
-        mod __inner_level1_nested {
+    pub(crate) mod __inner_nested {
+        pub(crate) mod __inner_level1_nested {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'Level1Level2', default_prefix: ''
             pub struct Level1Level2Nested2 {
@@ -52,8 +52,8 @@ fn main() {
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }
-    mod __inner_test_nested {
-        mod __inner_test_level1_nested {
+    pub(crate) mod __inner_test_nested {
+        pub(crate) mod __inner_test_level1_nested {
             /// Macros used for nested struct definition : []
             /// Struct with prefix 'TestLevel1Level2', default_prefix: ''
             pub struct TestLevel1Level2Nested2 {
