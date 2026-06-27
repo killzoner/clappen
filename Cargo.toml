@@ -23,6 +23,7 @@ syn = { version = "2.0.117", features = [
   "parsing",
   "printing",
   "proc-macro",
+  "visit-mut",
 ], default-features = false }
 
 [dev-dependencies]

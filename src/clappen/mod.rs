@@ -3,6 +3,8 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::Item;
 
+use crate::clappen_template_impl::expansion::Expansion;
+
 pub(crate) mod attrs;
 
 pub(crate) fn create_template(
@@ -74,6 +76,7 @@ pub(crate) fn create_template(
         })
         .collect();
 
+    // struct field idents, comma-joined, forwarded to the prefixing macros
     let fields: Vec<_> = struct_def
         .fields
         .iter()
@@ -89,7 +92,22 @@ pub(crate) fn create_template(
         })
         .collect();
 
-    let prefixed_item_impls: Vec<_> = items_impl
+    // split regular vs marked impls and build the per-prefix template arms
+    let Expansion {
+        regular_impls,
+        prefixed_self_apply,
+        prefixed_child_apply,
+        chained_self_apply,
+        chained_child_apply,
+        base_child_apply,
+    } = crate::clappen_template_impl::expansion::build(
+        &items_impl,
+        struct_def,
+        &fields,
+        default_prefix,
+    );
+
+    let prefixed_item_impls: Vec<_> = regular_impls
         .iter()
         .map(|e| {
             quote! {
@@ -105,11 +123,11 @@ pub(crate) fn create_template(
                 #(#use_items)*
                 #[clappen::__clappen_struct]
                 #struct_def
-                #(#items_impl)*
+                #(#regular_impls)*
             }
         }
         _ => {
-            let default_prefixed_item_impls: Vec<_> = items_impl
+            let default_prefixed_item_impls: Vec<_> = regular_impls
                 .iter()
                 .map(|e| {
                     quote! {
@@ -129,18 +147,47 @@ pub(crate) fn create_template(
         }
     };
 
+    // built once, used in both the `(@__struct $prefix)` and `($prefix)` arms
+    let prefixed_struct = quote! {
+        #(#use_items)*
+        #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
+        #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
+        #struct_def
+        #(#prefixed_item_impls)*
+    };
+
+    // documents the generated macro itself (not the `#[clappen]` attribute)
+    let macro_doc = " Invoke with `()` for the base struct, or `(\"prefix\")` for a prefixed copy. The `@__`-prefixed forms are internal and not part of the public API.";
+
     quote! {
+        #[doc = #macro_doc]
         #[macro_export]
         macro_rules! #export_macro {
+            // base instantiation: the plain struct. A template-free parent also emits each flattened
+            // child's conversion here (`child_apply` with an empty prefix).
             () => {
                 #default
+                #(#base_child_apply)*
             };
+            // prefixed instantiation: the prefixed struct, then this struct's own conversion
+            // (`self_apply`) and a call into each flattened child's macro (`child_apply`). Emitted
+            // inline rather than via a `@__template` self-call, which can't resolve across crates.
             ($prefix: literal) => {
-                #(#use_items)*
-                #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
-                #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
-                #struct_def
-                #(#prefixed_item_impls)*
+                #prefixed_struct
+                #(#prefixed_self_apply)*
+                #(#prefixed_child_apply)*
+            };
+
+            // internal arms, not part of the public API:
+            // struct only, no impls: builds a nested field's type for `clappen_command`
+            (@__struct $prefix: literal) => {
+                #prefixed_struct
+            };
+            // reached when this struct is flattened in a parent (via a parent's `child_apply`): the
+            // same `self_apply` + `child_apply` as the prefixed arm, at the chain the parent passed
+            (@__template $prefix: literal, chain = [ $( ($command_prefix: literal, $field: ident, $parent_default: literal) ),* $(,)? ]) => {
+                #(#chained_self_apply)*
+                #(#chained_child_apply)*
             };
         }
     }

@@ -15,6 +15,7 @@ mod clappen;
 mod clappen_command;
 mod clappen_impl;
 mod clappen_struct;
+mod clappen_template_impl;
 mod helper;
 
 use proc_macro::TokenStream;
@@ -66,6 +67,27 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
     expanded.into()
 }
 
+#[doc(hidden)]
+#[proc_macro_attribute]
+pub fn __clappen_template_impl(args: TokenStream, target: TokenStream) -> TokenStream {
+    // handle attributes
+    let cloned_args = args.clone();
+    let mut attrs = clappen_template_impl::attrs::Attributes::default();
+    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
+    parse_macro_input!(cloned_args with attrs_parser);
+
+    let item = parse_macro_input!(target as ItemImpl);
+
+    let expanded = clappen_template_impl::template::expand(item, attrs);
+
+    let expanded = match expanded {
+        Ok(e) => e,
+        Err(e) => e.to_compile_error(),
+    };
+
+    expanded.into()
+}
+
 /// Generates the macro defining prefixed struct.
 ///
 /// - content should start with a `mod` definition (which is not used in generated code, so put whatever you want)
@@ -78,6 +100,9 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 ///   to reference already exported macros and generate a prefix
 ///     - `apply` is mandatory
 ///     - `prefix` is optional
+///
+/// - impl blocks tagged `#[clappen_template_impl]` are generated for prefixed instantiations,
+///   letting a trait impl (e.g. `Into<Base>`) be written once and reused per prefix
 ///
 /// Prefixes are preserved across multiple levels of nested structs.
 #[proc_macro_attribute]
