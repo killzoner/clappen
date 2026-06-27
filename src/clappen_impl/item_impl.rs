@@ -1,8 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use std::str::FromStr;
-use syn::spanned::Spanned;
-use syn::{Ident, ItemImpl, parse_quote};
+use syn::{ItemImpl, Type, parse_quote};
 
 use super::ProcessItem;
 use crate::helper;
@@ -14,20 +13,14 @@ impl ProcessItem for ItemImpl {
         attrs_prefix: String,
         prefixed_fields: Vec<String>,
     ) -> syn::Result<TokenStream> {
-        let item = &self;
-        let mut self_ty = item.self_ty.to_token_stream();
-
-        let prefix = helper::snake_case(helper::prefix(&[
-            default_prefix.as_str(),
-            attrs_prefix.as_str(),
-        ]));
+        let prefix = helper::field_prefix(&default_prefix, &attrs_prefix);
 
         // handle impl ty prefix
-        if !prefix.is_empty() {
-            let mut ident = item.self_ty.to_token_stream().to_string();
-            ident.insert_str(0, &helper::camel_case(prefix.to_owned()));
-
-            self_ty = Ident::new(&ident, ident.span()).to_token_stream();
+        if !prefix.is_empty()
+            && let Type::Path(path) = self.self_ty.as_mut()
+            && let Some(segment) = path.path.segments.last_mut()
+        {
+            segment.ident = helper::prefixed_ident(&prefix, &segment.ident.to_string());
         }
 
         // handle renaming of self fields references
@@ -47,13 +40,12 @@ impl ProcessItem for ItemImpl {
         }
 
         let doc_prefixed_fields = prefixed_fields.join(",");
-        let items = &self.items;
+        // re-emit whole impl to keep trait and generics
+        let item = &*self;
 
         Ok(quote! {
             #[doc=concat!(concat!(" Fields with prefix: [", #doc_prefixed_fields, "]"))]
-            impl #self_ty {
-                #(#items)*
-            }
+            #item
         })
     }
 }
