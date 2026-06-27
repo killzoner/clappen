@@ -1,0 +1,11 @@
+args = ["--id", "h", "--primary-id", "h", "--secondary-id", "x"]
+bin.name = "clappen_template_impl"
+status.code = 0
+stderr = ""
+stdout = """
+base      = Remote { id: "h" }
+primary   = Remote { id: "h" }
+secondary = Remote { id: "x" }
+base == primary?      true
+primary == secondary? false
+"""

@@ -1,0 +1,10 @@
+[package]
+name = "cross-crate-fixture"
+edition = "2024"
+version = "0.0.0"
+publish = false
+
+# defines a clappen macro so a clappen integration test can invoke it from a *different* crate;
+# the dev-dependency cycle (clappen -> this -> clappen) is allowed for dev-dependencies
+[dependencies]
+clappen = { path = "../.." }
