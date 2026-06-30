@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `clap` unfortunately doesn't preserve field structure and prefix when flattening `command`s.\
 See [this issue](https://github.com/clap-rs/clap/issues/3513) for more in-depth explanation.
 
-This crate allows fixing that while not requiring custom wrapper to the end `clap` parser used. It's just a `struct` macro generator that uses `clap` default behaviour around `arg` attribute.\
+This crate allows fixing that while not requiring a custom wrapper to the end `clap` parser used. It's just a `struct` macro generator that uses `clap` default behaviour around `arg` attribute.\
 \
 See [clap documentation for arg](https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes).
 
@@ -95,7 +95,7 @@ See [clap documentation for arg](https://docs.rs/clap/latest/clap/_derive/index.
 
 ## FAQ
 
-### Why is `clappen_command` required with `command(flatten)` even without prefix  ?
+### Why is `clappen_command` required with `command(flatten)` even without a prefix?
 
 Because people work with copy/paste.
 
@@ -143,7 +143,7 @@ mod m {
     #[command(version, about)]
     pub struct Options {
         #[command(flatten)]
-        // You're back to original issue, prefix is 
+        // You're back to the original issue, prefix is
         // not maintained because `clappen` was not provided
         opts: CopyableOptions,
     }
@@ -159,6 +159,6 @@ Making `clappen_command` required for all `flatten` items avoids having to think
 
 ## Special thanks
 
-- Big up to [@dtolnay](https://github.com/dtolnay) and its wonderful work in `syn`, `quote` and `paste`.\
+- Big up to [@dtolnay](https://github.com/dtolnay) and his wonderful work in `syn`, `quote` and `paste`.\
   The initial implementation used `paste` but it is sadly now [unmaintained](https://github.com/dtolnay/paste/commit/6a302522990cbfd9de4e0c61d91854622f7b2999).
-- Kudos to [@epage](https://github.com/epage) for tireless maintaining `clap` and all its great features.
+- Kudos to [@epage](https://github.com/epage) for tirelessly maintaining `clap` and all its great features.

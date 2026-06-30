@@ -72,11 +72,13 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 ///     - `export` argument is required and defines the name of the exported macro
 ///     - `default_prefix` argument is optional: adds prefix to all fields if specified
 ///
-/// - fields can use `#[clappen_command(apply = <my_exported_macro_name>]` with `flatten` from `clap`
+/// - invoke the generated macro: `NAME!()` for the base struct, `NAME!("prefix")` for the prefixed struct
+///
+/// - fields can use `#[clappen_command(apply = <my_exported_macro_name>)]` with `flatten` from `clap`
 ///   to reference already exported macros and generate a prefix
 ///     - `apply` is mandatory
 ///     - `prefix` is optional
-///    
+///
 /// Prefixes are preserved across multiple levels of nested structs.
 #[proc_macro_attribute]
 pub fn clappen(args: TokenStream, target: TokenStream) -> TokenStream {
