@@ -62,6 +62,15 @@ pub(crate) fn field_prefix(default_prefix: &str, struct_prefix: &str) -> String 
     snake_case(prefix(&[default_prefix, struct_prefix]))
 }
 
+// a struct field's name once prefixed: `<prefix>_<name>`, unchanged when the prefix is empty
+pub(crate) fn prefixed_field(prefix: &str, name: &str) -> String {
+    if prefix.is_empty() {
+        name.to_string()
+    } else {
+        format!("{prefix}_{name}")
+    }
+}
+
 // prefix literal passed one level down to a nested field's generated macro
 pub(crate) fn nested_step_prefix(
     command_prefix: &str,

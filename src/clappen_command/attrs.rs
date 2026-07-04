@@ -99,7 +99,7 @@ impl Attributes {
         (
             quote! {
                     pub(crate) mod #module_name {
-                        #apply!(#nested_prefix);
+                        #apply!(@__struct #nested_prefix);
                     }
             },
             new_type_full_ref,

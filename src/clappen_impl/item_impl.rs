@@ -30,7 +30,7 @@ impl ProcessItem for ItemImpl {
                     let content = i.to_token_stream().to_string();
 
                     let origin = format!("self.{field}");
-                    let replace = format!("self.{prefix}_{field}");
+                    let replace = format!("self.{}", helper::prefixed_field(&prefix, field));
                     let content = content.replace(&origin, &replace);
 
                     let token = TokenStream::from_str(content.as_str())?;

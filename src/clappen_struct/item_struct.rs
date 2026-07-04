@@ -80,7 +80,7 @@ impl ProcessItem for ItemStruct {
             }
 
             // handle fields prefix
-            let mut ident = match &field.ident {
+            let ident = match &field.ident {
                 Some(e) => e.to_string(),
                 None => {
                     return Err(syn::Error::new(
@@ -90,11 +90,7 @@ impl ProcessItem for ItemStruct {
                 }
             };
 
-            // field prefix
-            if !prefix.is_empty() {
-                ident.insert_str(0, format!("{prefix}_").as_str());
-            }
-
+            let ident = helper::prefixed_field(&prefix, &ident);
             field.ident = Some(Ident::new(&ident, ident.span()));
 
             // Handle nested field definitions with macro uses.
