@@ -109,7 +109,7 @@ impl Attributes {
         Ok(NestedStruct {
             new_macro_call: quote! {
                     pub(crate) mod #module_name {
-                        #apply!(#nested_prefix);
+                        #apply!(@__struct #nested_prefix);
                     }
             },
             new_type,
