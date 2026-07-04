@@ -1,16 +1,7 @@
-//! Defines a clappen macro that `tests/cross_crate.rs` invokes from a different crate.
-
 #[clappen::clappen(export = nested)]
 mod nested {
-    #[derive(Debug, PartialEq)]
     pub struct MyStruct {
         pub id: String,
-    }
-
-    impl MyStruct {
-        pub fn id(&self) -> &str {
-            &self.id
-        }
     }
 
     #[clappen_template_impl]
@@ -22,19 +13,34 @@ mod nested {
 }
 
 #[clappen::clappen(export = prefixed_struct_generator)]
-mod m1 {
+mod prefixed_struct_generator {
     pub struct ServerOptions {
-        // `apply` must resolve in the caller's crate, so the path starts with `$crate`
-        #[clappen_command(apply = $crate::nested, prefix = "test")]
+        pub url: String,
+        #[clappen_command(apply = nested, prefix = "test")]
         pub nested: MyStruct,
     }
 
+    // the child's conversion is generated next to the parent's
     #[clappen_template_impl]
     impl From<Prefixed> for Base {
         fn from(value: Prefixed) -> Self {
             Self {
+                url: value.url,
                 nested: value.nested.into(),
             }
         }
     }
+}
+
+prefixed_struct_generator!();
+prefixed_struct_generator!("test1");
+
+fn main() {
+    let value = Test1ServerOptions {
+        test1_url: String::from("hi"),
+        test1_nested: __inner_test1_nested::Test1TestMyStruct {
+            test1_test_id: String::from("x"),
+        },
+    };
+    let _: ServerOptions = value.into();
 }
