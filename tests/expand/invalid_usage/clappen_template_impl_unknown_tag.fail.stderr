@@ -1,0 +1,5 @@
+error: unknown attribute; expected `base_tag` or `prefixed_tag`
+ --> tests/expand/invalid_usage/clappen_template_impl_unknown_tag.fail.rs:8:29
+  |
+8 |     #[clappen_template_impl(bad_tag = Canonical)]
+  |                             ^^^^^^^
