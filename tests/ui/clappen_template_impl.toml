@@ -1,0 +1,9 @@
+args = ["--id", "h", "--primary-id", "h", "--secondary-id", "x"]
+bin.name = "clappen_template_impl"
+status.code = 0
+stderr = ""
+stdout = """
+options == expected?  true
+base == primary?      true
+primary == secondary? false
+"""

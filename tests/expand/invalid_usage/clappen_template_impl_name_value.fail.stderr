@@ -1,0 +1,5 @@
+error: expected parentheses: #[clappen_template_impl(...)]
+ --> tests/expand/invalid_usage/clappen_template_impl_name_value.fail.rs:8:29
+  |
+8 |     #[clappen_template_impl = Foo]
+  |                             ^
