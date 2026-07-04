@@ -9,7 +9,7 @@ use crate::helper::{
 };
 
 // holds the raw value of a `default_prefix = ".."` attribute
-#[derive(Default)]
+#[derive(Debug, Default, PartialEq)]
 pub(crate) struct DefaultPrefix {
     value: Option<String>,
 }
@@ -49,7 +49,7 @@ impl PrefixValue for StructPrefix {
 }
 
 // holds the raw value of a `prefix = ".."` inside a field's `#[clappen_command(..)]`
-#[derive(Default)]
+#[derive(Debug, Default, PartialEq)]
 pub(crate) struct CommandPrefix {
     value: Option<String>,
 }
@@ -62,7 +62,14 @@ impl Parse for CommandPrefix {
     }
 }
 
+impl PrefixValue for CommandPrefix {
+    fn value(&self) -> &Option<String> {
+        &self.value
+    }
+}
+
 // snake case prefix for a struct's own ident and its field names
+#[derive(Clone)]
 pub(crate) struct FieldPrefix {
     value: Option<String>,
 }
@@ -127,6 +134,15 @@ impl NestedPrefix {
 impl ToTokens for NestedPrefix {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         self.value.to_tokens(tokens);
+    }
+}
+
+// what the parent passes down is the child's own `prefix = ".."`
+impl From<&NestedPrefix> for StructPrefix {
+    fn from(nested: &NestedPrefix) -> Self {
+        Self {
+            value: nested.value.clone(),
+        }
     }
 }
 

@@ -122,3 +122,11 @@ fn prefixed_ident(prefix: &Option<String>, base: &str) -> Ident {
 pub(crate) fn macro_module_name(field_ident: &str) -> Ident {
     format_ident!("__inner_{}", snake_case(field_ident))
 }
+
+// a value parsed from a string literal, so a test can build one without a token stream
+#[cfg(test)]
+pub(crate) fn parse_literal<P: Parse>(value: &str) -> P {
+    let literal = LitStr::new(value, Span::call_site());
+
+    syn::parse_quote!(#literal)
+}
