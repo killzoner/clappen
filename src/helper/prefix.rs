@@ -62,7 +62,14 @@ impl Parse for CommandPrefix {
     }
 }
 
+impl PrefixValue for CommandPrefix {
+    fn value(&self) -> &Option<String> {
+        &self.value
+    }
+}
+
 // snake case prefix for a struct's own ident and its field names
+#[derive(Clone)]
 pub(crate) struct FieldPrefix {
     value: Option<String>,
 }
@@ -127,6 +134,15 @@ impl NestedPrefix {
 impl ToTokens for NestedPrefix {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         self.value.to_tokens(tokens);
+    }
+}
+
+// what the parent passes down is the child's own `prefix = ".."`
+impl From<&NestedPrefix> for StructPrefix {
+    fn from(nested: &NestedPrefix) -> Self {
+        Self {
+            value: nested.value.clone(),
+        }
     }
 }
 
