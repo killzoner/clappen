@@ -13,6 +13,14 @@ fn prefixed_struct_and_impl_across_crates() {
     };
 
     assert_eq!(nested.id(), "x");
+
+    let base: MyStruct = nested.into();
+    assert_eq!(
+        base,
+        MyStruct {
+            id: String::from("x")
+        }
+    );
 }
 
 #[test]
@@ -23,5 +31,6 @@ fn flattened_child_across_crates() {
         },
     };
 
-    assert_eq!(options.test1_nested.test1_test_id, "x");
+    let base: ServerOptions = options.into();
+    assert_eq!(base.nested.test_id, "x");
 }
