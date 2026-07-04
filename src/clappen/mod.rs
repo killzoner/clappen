@@ -3,9 +3,12 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Item, Result};
 
+use crate::clappen::{arm::Arm, template_parts::TemplateParts};
 use crate::helper::PrefixValue;
 
+mod arm;
 pub(crate) mod attrs;
+mod template_parts;
 
 // Constant
 const EXPORT_ATTR: &str = "export";
@@ -66,9 +69,19 @@ pub(crate) fn expand(
     // struct field idents, forwarded to the prefixing macros
     let fields: Vec<_> = struct_def.fields.iter().flat_map(|e| &e.ident).collect();
 
-    let arm_body = |attribute_prefix: TokenStream| {
+    // split regular vs template impls and build each arm's template parts
+    let TemplateParts {
+        regular_impls,
+        base,
+        prefixed,
+        template,
+    } = template_parts::build(&items_impl, struct_def, &fields, &attrs.default_prefix)?;
+
+    // the struct and its regular impls, for every arm but `@__template`
+    let arm_body = |arm: Arm| {
+        let attribute_prefix = arm.attribute_prefix();
         let default_prefix = attrs.default_prefix.value().as_slice();
-        let item_impls = items_impl.iter().map(|e| {
+        let item_impls = regular_impls.iter().map(|e| {
             quote! {
                 #[clappen::__clappen_impl(#attribute_prefix #(default_prefix = #default_prefix,)* prefixed_fields = [#(#fields),*])]
                 #e
@@ -82,20 +95,46 @@ pub(crate) fn expand(
             #(#item_impls)*
         }
     };
-    let base_struct = arm_body(TokenStream::new());
-    let prefixed_struct = arm_body(quote! { prefix = $prefix, });
+    let base_struct = arm_body(Arm::Base);
+    let prefixed_struct = arm_body(Arm::Prefixed);
+    let nested_struct = arm_body(Arm::Struct);
 
-    let macro_doc = " Invoke with `()` for the base struct, or `(\"prefix\")` for a prefixed copy.";
+    let macro_doc = " Invoke with `()` for the base struct, or `(\"prefix\")` for a prefixed copy. The `@__`-prefixed forms are internal and not part of the public API.";
+
+    let base_child_apply = &base.child_apply.invocations;
+    let prefixed_self_apply = &prefixed.self_apply.impls;
+    let prefixed_child_apply = &prefixed.child_apply.invocations;
+    let template_self_apply = &template.self_apply.impls;
+    let template_child_apply = &template.child_apply.invocations;
 
     Ok(quote! {
         #[doc = #macro_doc]
         #[macro_export]
         macro_rules! #export_macro {
+            // base: the plain struct, and its children's template impls
             () => {
                 #base_struct
+                #(#base_child_apply)*
             };
+            // prefixed: the struct, its template impls and its children's. It does not call
+            // this macro's `@__template`, because that call does not work across crates
             ($prefix: literal) => {
                 #prefixed_struct
+                #(#prefixed_self_apply)*
+                #(#prefixed_child_apply)*
+            };
+
+            // internal arms, not public API
+            // `@__struct`: a nested field's type, for `clappen_command`
+            (@__struct $($prefix: literal)?) => {
+                #nested_struct
+            };
+            // `@__template`: a parent's `child_apply`, the prefixed arm's output at its chain
+            (@__template $($prefix: literal,)? chain = [
+                $( ( $($command_prefix: literal,)? $field: ident $(, $parent_default: literal)? ) ),* $(,)?
+            ]) => {
+                #(#template_self_apply)*
+                #(#template_child_apply)*
             };
         }
     })
