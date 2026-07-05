@@ -78,15 +78,7 @@ See [clap documentation for arg](https://docs.rs/clap/latest/clap/_derive/index.
 
 ## Limitations
 
-- Providing custom `long` or `env` to your fields is not supported.
-
-- References to fields with more than 1 nesting level won't work - like `self.my_field_level1.my_field_level2`.\
-  \
-  Generally this should not be needed because you want to get something *out* of your reusable struct parser (and Rust might get in your way for borrow-related things).\
-  \
-  If you *still* want to do that, you can write custom getter functions, and the renamed fields will be picked in the `impl` blocks.
-
-- Probably some edge cases are not covered. For example, `clap` `subcommand`s should be working, but it was not tested extensively as my use case is mainly reusing `struct`s in a mono repository fashion.
+See [LIMITATIONS.md](https://github.com/killzoner/clappen/blob/master/LIMITATIONS.md) for the limitations of each feature, with workarounds.
 
 ## FAQ
 
