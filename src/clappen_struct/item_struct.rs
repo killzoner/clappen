@@ -80,22 +80,15 @@ impl ProcessItem for ItemStruct {
             }
 
             // handle fields prefix
-            let mut ident = match &field.ident {
-                Some(e) => e.to_string(),
-                None => {
-                    return Err(syn::Error::new(
-                        field.span(),
-                        "Ident field could not be parsed",
-                    ));
-                }
+            let Some(ident) = &field.ident else {
+                return Err(syn::Error::new(
+                    field.span(),
+                    "Ident field could not be parsed",
+                ));
             };
 
-            // field prefix
-            if !prefix.is_empty() {
-                ident.insert_str(0, format!("{prefix}_").as_str());
-            }
-
-            field.ident = Some(Ident::new(&ident, Span::call_site()));
+            let prefixed = helper::prefixed_field(&prefix, &ident.to_string());
+            field.ident = Some(Ident::new(&prefixed, Span::call_site()));
 
             // Handle nested field definitions with macro uses.
             if let (Some(command_attrs), Some(field_ident)) =
