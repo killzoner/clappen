@@ -1,4 +1,4 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
@@ -95,7 +95,7 @@ impl ProcessItem for ItemStruct {
                 ident.insert_str(0, format!("{prefix}_").as_str());
             }
 
-            field.ident = Some(Ident::new(&ident, ident.span()));
+            field.ident = Some(Ident::new(&ident, Span::call_site()));
 
             // Handle nested field definitions with macro uses.
             if let (Some(command_attrs), Some(field_ident)) =
