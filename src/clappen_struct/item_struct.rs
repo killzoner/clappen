@@ -134,7 +134,9 @@ impl ProcessItem for ItemStruct {
 
         let debug_nested_macro_uses: Vec<_> = nested_macro_uses
             .iter()
-            .filter_map(|e: &clappen_command::attrs::Attributes| e.apply.get_ident())
+            .filter_map(|e: &clappen_command::attrs::Attributes| {
+                syn::parse2::<Ident>(e.apply.clone()).ok()
+            })
             .map(|e| e.to_string())
             .collect();
 
