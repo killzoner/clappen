@@ -8,7 +8,7 @@ use crate::helper;
 
 #[derive(Clone)]
 pub(crate) enum NestedAttributes {
-    Apply(Path),
+    Apply(TokenStream),
     Prefix(Option<String>),
 }
 
@@ -19,7 +19,12 @@ impl Parse for NestedAttributes {
         let _eq_token: Token![=] = input.parse()?;
 
         match &keyword {
-            k if k == "apply" => Ok(NestedAttributes::Apply(input.parse()?)),
+            k if k == "apply" => {
+                // parsed as a path, kept as tokens: `$crate::child` needs the `$`
+                let dollar: Option<Token![$]> = input.parse()?;
+                let path: Path = input.parse()?;
+                Ok(NestedAttributes::Apply(quote! { #dollar #path }))
+            }
             k if k == "prefix" => {
                 let val: LitStr = input.parse()?;
                 let val = val.value();
@@ -43,7 +48,7 @@ impl Parse for NestedAttributes {
 
 #[derive(Clone)]
 pub(crate) struct Attributes {
-    pub apply: Path,
+    pub apply: TokenStream,
     pub prefix: String,
 }
 
