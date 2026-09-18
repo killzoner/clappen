@@ -75,7 +75,8 @@ fn main() {
             Some(clap::Id::from("NestedMyStruct"))
         }
         fn augment_args<'b>(__clap_app: clap::Command) -> clap::Command {
-            {
+            let __clap_app = __clap_app;
+            let __clap_app = {
                 let __clap_app = __clap_app
                     .group(
                         clap::ArgGroup::new("NestedMyStruct")
@@ -86,10 +87,12 @@ fn main() {
                             }),
                     );
                 __clap_app
-            }
+            };
+            __clap_app
         }
         fn augment_args_for_update<'b>(__clap_app: clap::Command) -> clap::Command {
-            {
+            let __clap_app = __clap_app;
+            let __clap_app = {
                 let __clap_app = __clap_app
                     .group(
                         clap::ArgGroup::new("NestedMyStruct")
@@ -100,7 +103,8 @@ fn main() {
                             }),
                     );
                 __clap_app
-            }
+            };
+            __clap_app
         }
     }
     (/*ERROR*/)
