@@ -82,6 +82,7 @@ pub(crate) fn nested_step_prefix(
 
 // type/struct ident: prefix prepended (camelCased) to a base name
 pub(crate) fn prefixed_ident(prefix: &str, base: &str) -> Ident {
+    let prefix = snake_case(prefix.to_string());
     Ident::new(&camel_case(format!("{prefix}{base}")), Span::call_site())
 }
 
