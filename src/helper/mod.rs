@@ -1,6 +1,8 @@
 use proc_macro2::{Ident, Span};
 use quote::format_ident;
-use syn::{LitStr, Result};
+use syn::parse::Parse;
+use syn::punctuated::Punctuated;
+use syn::{LitStr, Result, Token, meta::ParseNestedMeta};
 
 /// Prefix adds each prefix in order, skipping the ones that are not set.
 /// result is constructed using snake_case
@@ -56,6 +58,17 @@ fn camel_case(elt: &str) -> String {
     }
 
     acc
+}
+
+// a `name = [a, b]` attribute value
+pub(crate) fn parse_bracketed<T: Parse>(meta: &ParseNestedMeta) -> Result<Vec<T>> {
+    let value = meta.value()?;
+    let content;
+    syn::bracketed!(content in value);
+
+    Ok(Punctuated::<T, Token![,]>::parse_terminated(&content)?
+        .into_iter()
+        .collect())
 }
 
 // a prefix attribute value, which must not be empty
