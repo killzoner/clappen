@@ -1,0 +1,5 @@
+error: 'prefix' must not be empty
+  --> tests/expand/invalid_usage/clappen_command_empty_prefix.fail.rs:13:52
+   |
+13 |         #[clappen_command(apply = nested, prefix = "")]
+   |                                                    ^^

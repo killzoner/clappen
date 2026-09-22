@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::spanned::Spanned;
-use syn::{Ident, LitStr, Path, Token, Type};
+use syn::{Ident, Path, Token, Type};
 
 use crate::helper;
 
@@ -26,17 +26,9 @@ impl Parse for NestedAttributes {
                 Ok(NestedAttributes::Apply(quote! { #dollar #path }))
             }
             k if k == "prefix" => {
-                let val: LitStr = input.parse()?;
-                let val = val.value();
+                let prefix = helper::require_non_empty(input.parse()?, k)?;
 
-                if val.is_empty() {
-                    return Err(syn::Error::new(
-                        keyword.span(),
-                        "'prefix' attribute field  must not be empty when provided",
-                    ));
-                }
-
-                Ok(NestedAttributes::Prefix(Some(val)))
+                Ok(NestedAttributes::Prefix(Some(prefix)))
             }
             e => Err(syn::Error::new(
                 keyword.span(),

@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span};
 use quote::format_ident;
-use syn::{LitStr, Result, meta::ParseNestedMeta};
+use syn::{LitStr, Result};
 
 /// Prefix adds each prefix in order, skipping the ones that are not set.
 /// result is constructed using snake_case
@@ -59,13 +59,12 @@ fn camel_case(elt: &str) -> String {
 }
 
 // a prefix attribute value, which must not be empty
-pub(crate) fn parse_prefix(meta: &ParseNestedMeta, name: &Ident) -> Result<String> {
-    let prefix: LitStr = meta.value()?.parse()?;
-    let value = prefix.value();
+pub(crate) fn require_non_empty(attribute: LitStr, name: &Ident) -> Result<String> {
+    let value = attribute.value();
 
     if value.is_empty() {
         return Err(syn::Error::new(
-            prefix.span(),
+            attribute.span(),
             format!("'{name}' must not be empty"),
         ));
     }

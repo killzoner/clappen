@@ -18,7 +18,9 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => self.prefix = Some(helper::parse_prefix(&meta, ident)?),
+            "prefix" => {
+                self.prefix = Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
+            }
             "prefixed_fields" => {
                 let attrs: ExprArray = meta.value()?.parse()?;
 
@@ -28,7 +30,10 @@ impl Attributes {
                     .map(|e| e.into_token_stream().to_string())
                     .collect();
             }
-            "default_prefix" => self.default_prefix = Some(helper::parse_prefix(&meta, ident)?),
+            "default_prefix" => {
+                self.default_prefix =
+                    Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
+            }
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };
 
