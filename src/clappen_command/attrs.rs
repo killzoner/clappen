@@ -49,7 +49,7 @@ impl Parse for NestedAttributes {
 #[derive(Clone)]
 pub(crate) struct Attributes {
     pub apply: TokenStream,
-    pub prefix: String,
+    pub prefix: Option<String>,
 }
 
 impl TryFrom<Vec<NestedAttributes>> for Attributes {
@@ -79,10 +79,7 @@ impl TryFrom<Vec<NestedAttributes>> for Attributes {
 
         Ok(Attributes {
             apply: macro_use.to_owned().clone(),
-            prefix: field_prefix
-                .first()
-                .map(|e| (*e).to_owned())
-                .unwrap_or_default(),
+            prefix: field_prefix.first().map(|e| (*e).to_owned()),
         })
     }
 }
@@ -90,8 +87,8 @@ impl TryFrom<Vec<NestedAttributes>> for Attributes {
 impl Attributes {
     pub(crate) fn nested_macro_call(
         &self,
-        default_prefix: &str,
-        struct_prefix: &str,
+        default_prefix: &Option<String>,
+        struct_prefix: &Option<String>,
         field_ident: &Ident,
         field_type: &Type,
     ) -> (TokenStream, TokenStream) {
@@ -113,7 +110,7 @@ impl Attributes {
 
     fn new_full_type_definition(
         module_name: &Ident,
-        nested_prefix: &str,
+        nested_prefix: &Option<String>,
         field_type: &Type,
     ) -> TokenStream {
         // allow for fully qualified type notation, needed for $crate::something

@@ -26,6 +26,7 @@ fn main() {
         }
     }
     /// Macros used for nested struct definition : [nested1]
+    /// Struct with prefix '', default_prefix: ''
     pub struct ServerOptions {
         /// Address to connect to.
         ///
@@ -37,6 +38,7 @@ fn main() {
         ///
         nested: __inner_nested::Level1Nested1,
     }
+    /// Fields with prefix: [url,say_hello,nested]
     impl ServerOptions {
         fn a_function(&self) -> String {
             ::alloc::__export::must_use({
@@ -49,6 +51,7 @@ fn main() {
             self.nested.another_nested_function_1()
         }
     }
+    /// Fields with prefix: [url,say_hello,nested]
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }

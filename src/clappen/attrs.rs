@@ -1,6 +1,7 @@
-use syn::LitStr;
 use syn::spanned::Spanned;
 use syn::{Ident, Result, meta::ParseNestedMeta};
+
+use crate::helper;
 
 #[derive(Default)]
 pub(crate) struct Attributes {
@@ -22,9 +23,7 @@ impl Attributes {
                 Ok(())
             }
             "default_prefix" => {
-                let prefix: LitStr = meta.value()?.parse()?; // don't use option type here, should be filled if specified
-
-                self.default_prefix = prefix.value();
+                self.default_prefix = helper::parse_prefix(&meta, ident)?;
 
                 Ok(())
             }

@@ -12,7 +12,7 @@ const FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN: &str = "flatten";
 pub(crate) trait ProcessItem {
     fn process(
         &mut self,
-        default_prefix: String,
-        prefix: String,
+        default_prefix: Option<String>,
+        prefix: Option<String>,
     ) -> syn::Result<proc_macro2::TokenStream>;
 }

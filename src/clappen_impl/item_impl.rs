@@ -9,14 +9,14 @@ use crate::helper;
 impl ProcessItem for ItemImpl {
     fn process(
         &mut self,
-        default_prefix: String,
-        attrs_prefix: String,
+        default_prefix: Option<String>,
+        attrs_prefix: Option<String>,
         prefixed_fields: Vec<String>,
     ) -> syn::Result<TokenStream> {
         let prefix = helper::field_prefix(&default_prefix, &attrs_prefix);
 
         // handle impl ty prefix
-        if !prefix.is_empty()
+        if prefix.is_some()
             && let Type::Path(path) = self.self_ty.as_mut()
             && let Some(segment) = path.path.segments.last_mut()
         {
@@ -24,7 +24,7 @@ impl ProcessItem for ItemImpl {
         }
 
         // handle renaming of self fields references
-        if !prefix.is_empty() {
+        if prefix.is_some() {
             for i in self.items.iter_mut() {
                 for field in &prefixed_fields {
                     let content = i.to_token_stream().to_string();

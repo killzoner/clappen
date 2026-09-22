@@ -1,5 +1,6 @@
 fn main() {
     /// Macros used for nested struct definition : []
+    /// Struct with prefix '', default_prefix: ''
     pub struct ServerOptions {
         /// Address to connect to.
         ///
@@ -8,6 +9,7 @@ fn main() {
         ///
         say_hello: Option<bool>,
     }
+    /// Fields with prefix: [url,say_hello]
     impl ServerOptions {
         fn a_function(&self) {
             {
@@ -19,6 +21,7 @@ fn main() {
         }
         fn another_function(&self) {}
     }
+    /// Fields with prefix: [url,say_hello]
     impl ServerOptions {
         fn a_third_function_in_second_impl_block(&self) {}
     }

@@ -20,6 +20,9 @@ pub(crate) fn create_template(
     };
 
     let default_prefix = &attrs.default_prefix;
+    // no key when the module has no default prefix
+    let default_prefix_arg =
+        (!default_prefix.is_empty()).then(|| quote! { , default_prefix = #default_prefix });
 
     let unknown_items: Vec<_> = items
         .iter()
@@ -93,7 +96,17 @@ pub(crate) fn create_template(
         .iter()
         .map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
+                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*] #default_prefix_arg)]
+                #e
+            }
+        })
+        .collect();
+
+    let default_item_impls: Vec<_> = items_impl
+        .iter()
+        .map(|e| {
+            quote! {
+                #[clappen::__clappen_impl(prefixed_fields = [#(#fields)*] #default_prefix_arg)]
                 #e
             }
         })
@@ -105,26 +118,15 @@ pub(crate) fn create_template(
                 #(#use_items)*
                 #[clappen::__clappen_struct]
                 #struct_def
-                #(#items_impl)*
+                #(#default_item_impls)*
             }
         }
         _ => {
-            let default_prefixed_item_impls: Vec<_> = items_impl
-                .iter()
-                .map(|e| {
-                    quote! {
-                        #[clappen::__clappen_impl(prefixed_fields = [#(#fields)*], default_prefix = #default_prefix)]
-                        #e
-                    }
-                })
-                .collect();
-
             quote! {
                 #(#use_items)*
-                #[doc=concat!(" Struct with prefix '', default_prefix: '", #default_prefix, "'")]
                 #[clappen::__clappen_struct(default_prefix = #default_prefix)]
                 #struct_def
-                #(#default_prefixed_item_impls)*
+                #(#default_item_impls)*
             }
         }
     };
@@ -137,8 +139,7 @@ pub(crate) fn create_template(
             };
             ($prefix: literal) => {
                 #(#use_items)*
-                #[doc=concat!(" Struct with prefix '", $prefix, "', default_prefix: '", #default_prefix, "'")]
-                #[clappen::__clappen_struct(prefix = $prefix, default_prefix = #default_prefix)]
+                #[clappen::__clappen_struct(prefix = $prefix #default_prefix_arg)]
                 #struct_def
                 #(#prefixed_item_impls)*
             };

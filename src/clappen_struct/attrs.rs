@@ -1,10 +1,12 @@
 use syn::spanned::Spanned;
-use syn::{LitStr, Result, meta::ParseNestedMeta};
+use syn::{Result, meta::ParseNestedMeta};
+
+use crate::helper;
 
 #[derive(Default)]
 pub(crate) struct Attributes {
-    pub prefix: String,
-    pub default_prefix: String,
+    pub prefix: Option<String>,
+    pub default_prefix: Option<String>,
 }
 
 impl Attributes {
@@ -14,16 +16,8 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => {
-                let prefix: LitStr = meta.value()?.parse()?;
-
-                self.prefix = prefix.value();
-            }
-            "default_prefix" => {
-                let prefix: LitStr = meta.value()?.parse()?;
-
-                self.default_prefix = prefix.value();
-            }
+            "prefix" => self.prefix = Some(helper::parse_prefix(&meta, ident)?),
+            "default_prefix" => self.default_prefix = Some(helper::parse_prefix(&meta, ident)?),
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };
 

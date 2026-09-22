@@ -14,8 +14,8 @@ use crate::{clappen_command, helper};
 impl ProcessItem for ItemStruct {
     fn process(
         &mut self,
-        default_prefix: String,
-        struct_prefix: String,
+        default_prefix: Option<String>,
+        struct_prefix: Option<String>,
     ) -> syn::Result<TokenStream> {
         let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
         let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
@@ -23,7 +23,7 @@ impl ProcessItem for ItemStruct {
         let prefix = helper::field_prefix(&default_prefix, &struct_prefix);
 
         // handle struct prefix
-        if !prefix.is_empty() {
+        if prefix.is_some() {
             self.ident = helper::prefixed_ident(&prefix, &self.ident.to_string());
         }
 
@@ -95,8 +95,8 @@ impl ProcessItem for ItemStruct {
                 (clappen_command_attributes, &field.ident)
             {
                 let (new_macro_call, new_type_full) = command_attrs.nested_macro_call(
-                    default_prefix.as_str(),
-                    struct_prefix.as_str(),
+                    &default_prefix,
+                    &struct_prefix,
                     field_ident,
                     &field.ty,
                 );
@@ -138,11 +138,14 @@ impl ProcessItem for ItemStruct {
             .collect();
 
         let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
+        let doc_prefix = format!("'{}'", struct_prefix.as_deref().unwrap_or_default());
+        let doc_default_prefix = format!("'{}'", default_prefix.as_deref().unwrap_or_default());
         let expanded = self;
 
         Ok(quote! {
             #(#nested_macro_calls)*
             #[doc=concat!(concat!(" Macros used for nested struct definition : [", #debug_nested_macro_uses, "]"))]
+            #[doc=concat!(" Struct with prefix ", #doc_prefix, ", default_prefix: ", #doc_default_prefix)]
             #expanded
         })
     }

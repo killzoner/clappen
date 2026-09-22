@@ -5,8 +5,8 @@ pub(crate) mod item_impl;
 pub(crate) trait ProcessItem {
     fn process(
         &mut self,
-        default_prefix: String,
-        prefix: String,
+        default_prefix: Option<String>,
+        prefix: Option<String>,
         prefixed_fields: Vec<String>,
     ) -> syn::Result<proc_macro2::TokenStream>;
 }

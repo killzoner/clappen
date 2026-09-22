@@ -1,0 +1,5 @@
+error: 'default_prefix' must not be empty
+ --> tests/expand/invalid_usage/empty_default_prefix.fail.rs:1:73
+  |
+1 | #[clappen::clappen(export = prefixed_struct_generator, default_prefix = "")]
+  |                                                                         ^^
