@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use std::str::FromStr;
-use syn::{ItemImpl, Type, parse_quote};
+use syn::{Ident, ItemImpl, Type, parse_quote};
 
 use super::ProcessItem;
 use crate::helper;
@@ -11,7 +11,7 @@ impl ProcessItem for ItemImpl {
         &mut self,
         default_prefix: Option<String>,
         attrs_prefix: Option<String>,
-        prefixed_fields: Vec<String>,
+        prefixed_fields: Vec<Ident>,
     ) -> syn::Result<TokenStream> {
         let prefix = helper::field_prefix(&default_prefix, &attrs_prefix);
 
@@ -29,8 +29,9 @@ impl ProcessItem for ItemImpl {
                 for field in &prefixed_fields {
                     let content = i.to_token_stream().to_string();
 
+                    let field = field.to_string();
                     let origin = format!("self.{field}");
-                    let replace = format!("self.{}", helper::prefixed_field(&prefix, field));
+                    let replace = format!("self.{}", helper::prefixed_field(&prefix, &field));
                     let content = content.replace(&origin, &replace);
 
                     let token = TokenStream::from_str(content.as_str())?;
@@ -39,7 +40,11 @@ impl ProcessItem for ItemImpl {
             }
         }
 
-        let doc_prefixed_fields = prefixed_fields.join(",");
+        let doc_prefixed_fields = prefixed_fields
+            .iter()
+            .map(Ident::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
         // re-emit whole impl to keep trait and generics
         let item = &*self;
 

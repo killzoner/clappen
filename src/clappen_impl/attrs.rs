@@ -1,13 +1,12 @@
-use quote::ToTokens;
 use syn::spanned::Spanned;
-use syn::{ExprArray, Result, meta::ParseNestedMeta};
+use syn::{Ident, Result, meta::ParseNestedMeta};
 
 use crate::helper;
 
 #[derive(Default)]
 pub(crate) struct Attributes {
     pub prefix: Option<String>,
-    pub prefixed_fields: Vec<String>,
+    pub prefixed_fields: Vec<Ident>,
     pub default_prefix: Option<String>,
 }
 
@@ -21,15 +20,7 @@ impl Attributes {
             "prefix" => {
                 self.prefix = Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
             }
-            "prefixed_fields" => {
-                let attrs: ExprArray = meta.value()?.parse()?;
-
-                self.prefixed_fields = attrs
-                    .elems
-                    .iter()
-                    .map(|e| e.into_token_stream().to_string())
-                    .collect();
-            }
+            "prefixed_fields" => self.prefixed_fields = helper::parse_bracketed(&meta)?,
             "default_prefix" => {
                 self.default_prefix =
                     Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)

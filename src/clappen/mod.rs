@@ -1,6 +1,6 @@
 use attrs::Attributes;
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::quote;
 use syn::Item;
 
 pub(crate) mod attrs;
@@ -77,26 +77,13 @@ pub(crate) fn create_template(
         })
         .collect();
 
-    let fields: Vec<_> = struct_def
-        .fields
-        .iter()
-        .flat_map(|e| &e.ident)
-        .enumerate()
-        .map(|(index, e)| {
-            // don't add a comma if it's last ident
-            if index == struct_def.fields.len() - 1 {
-                e.to_token_stream()
-            } else {
-                quote! {#e,}
-            }
-        })
-        .collect();
+    let fields: Vec<_> = struct_def.fields.iter().flat_map(|e| &e.ident).collect();
 
     let prefixed_item_impls: Vec<_> = items_impl
         .iter()
         .map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields)*] #default_prefix_arg)]
+                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields),*] #default_prefix_arg)]
                 #e
             }
         })
@@ -106,7 +93,7 @@ pub(crate) fn create_template(
         .iter()
         .map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefixed_fields = [#(#fields)*] #default_prefix_arg)]
+                #[clappen::__clappen_impl(prefixed_fields = [#(#fields),*] #default_prefix_arg)]
                 #e
             }
         })
