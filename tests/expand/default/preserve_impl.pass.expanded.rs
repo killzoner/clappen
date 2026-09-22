@@ -11,17 +11,21 @@ trait GenTrait<A> {
 }
 fn main() {
     /// Macros used for nested struct definition : []
+    /// Struct with prefix '', default_prefix: ''
     struct Struct {}
+    /// Fields with prefix: []
     impl Trait for Struct {
         fn foo(&self) -> String {
             String::from("Struct Trait Impl")
         }
     }
+    /// Fields with prefix: []
     impl GenTrait<SpecificType> for Struct {
         fn baz(&self) -> String {
             String::from("Struct GenTrait Impl")
         }
     }
+    /// Fields with prefix: []
     unsafe impl UnsafeTrait for Struct {
         fn bar(&self) -> String {
             String::from("Struct UnsafeTrait Impl")
@@ -49,9 +53,11 @@ fn main() {
         }
     }
     /// Macros used for nested struct definition : []
+    /// Struct with prefix '', default_prefix: ''
     struct GenericStruct<A> {
         iter: A,
     }
+    /// Fields with prefix: [iter]
     impl<A, I> Trait for GenericStruct<I>
     where
         A: std::fmt::Display,

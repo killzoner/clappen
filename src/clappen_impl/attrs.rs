@@ -1,12 +1,14 @@
 use quote::ToTokens;
 use syn::spanned::Spanned;
-use syn::{ExprArray, LitStr, Result, meta::ParseNestedMeta};
+use syn::{ExprArray, Result, meta::ParseNestedMeta};
+
+use crate::helper;
 
 #[derive(Default)]
 pub(crate) struct Attributes {
-    pub prefix: String,
+    pub prefix: Option<String>,
     pub prefixed_fields: Vec<String>,
-    pub default_prefix: String,
+    pub default_prefix: Option<String>,
 }
 
 impl Attributes {
@@ -16,11 +18,7 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => {
-                let prefix: LitStr = meta.value()?.parse()?; // don't use option type here, should be filled if specified
-
-                self.prefix = prefix.value();
-            }
+            "prefix" => self.prefix = Some(helper::parse_prefix(&meta, ident)?),
             "prefixed_fields" => {
                 let attrs: ExprArray = meta.value()?.parse()?;
 
@@ -30,11 +28,7 @@ impl Attributes {
                     .map(|e| e.into_token_stream().to_string())
                     .collect();
             }
-            "default_prefix" => {
-                let prefix: LitStr = meta.value()?.parse()?; // don't use option type here, should be filled if specified
-
-                self.default_prefix = prefix.value();
-            }
+            "default_prefix" => self.default_prefix = Some(helper::parse_prefix(&meta, ident)?),
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };
 

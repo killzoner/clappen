@@ -1,0 +1,5 @@
+error: 'prefix' must not be empty
+ --> tests/expand/invalid_usage/clappen_impl_empty_prefix.fail.rs:8:40
+  |
+8 |     #[clappen::__clappen_impl(prefix = "", prefixed_fields = [address])]
+  |                                        ^^

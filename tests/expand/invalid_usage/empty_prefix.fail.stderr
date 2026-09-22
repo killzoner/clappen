@@ -1,0 +1,5 @@
+error: 'prefix' must not be empty
+ --> tests/expand/invalid_usage/empty_prefix.fail.rs:9:32
+  |
+9 |     prefixed_struct_generator!("");
+  |                                ^^

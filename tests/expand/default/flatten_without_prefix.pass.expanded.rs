@@ -5,6 +5,7 @@ fn main() {
         pub struct MyStruct {}
     }
     /// Macros used for nested struct definition : [nested]
+    /// Struct with prefix '', default_prefix: ''
     pub struct ServerOptions {
         /// Address to connect to.
         ///
