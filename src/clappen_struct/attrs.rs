@@ -16,8 +16,13 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => self.prefix = Some(helper::parse_prefix(&meta, ident)?),
-            "default_prefix" => self.default_prefix = Some(helper::parse_prefix(&meta, ident)?),
+            "prefix" => {
+                self.prefix = Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
+            }
+            "default_prefix" => {
+                self.default_prefix =
+                    Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
+            }
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };
 

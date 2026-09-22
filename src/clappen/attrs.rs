@@ -23,7 +23,7 @@ impl Attributes {
                 Ok(())
             }
             "default_prefix" => {
-                self.default_prefix = helper::parse_prefix(&meta, ident)?;
+                self.default_prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?;
 
                 Ok(())
             }
