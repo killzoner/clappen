@@ -125,12 +125,49 @@ pub(crate) fn nested_step_prefix(
 
 // type/struct ident: prefix prepended (camelCased) to a base name
 pub(crate) fn prefixed_ident(prefix: &Option<String>, base: &str) -> Ident {
-    let prefix = prefix.as_deref().map(snake_case).unwrap_or_default();
+    let name = match prefix {
+        Some(prefix) => format!("{}_{}", snake_case(prefix), snake_case(base)),
+        None => snake_case(base),
+    };
 
-    Ident::new(&camel_case(&format!("{prefix}{base}")), Span::call_site())
+    Ident::new(&camel_case(&name), Span::call_site())
 }
 
 // module wrapping a nested field's struct, e.g. __inner_my_field
 pub(crate) fn macro_module_name(field_ident: &str) -> Ident {
     format_ident!("__inner_{}", snake_case(field_ident))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parent_and_child_name_the_same_type() {
+        let cases = [
+            (None, None, "Remote"),
+            (Some("d"), None, "Remote"),
+            (Some("d"), Some("test"), "Remote"),
+            (Some("my_d"), Some("test"), "Remote"),
+            (Some("log"), Some("test"), "HTTPServer"),
+        ];
+
+        for (child_default, command_prefix, struct_ident) in cases {
+            let child_default = child_default.map(str::to_string);
+            let command_prefix = command_prefix.map(str::to_string);
+
+            // what `child!()` names the struct: `DRemote`
+            let base_name = prefixed_ident(&field_prefix(&child_default, &None), struct_ident);
+            let nested = nested_step_prefix(&command_prefix, &None, &None);
+
+            let parent_reference = prefixed_ident(&nested, &base_name.to_string());
+            let child_definition =
+                prefixed_ident(&field_prefix(&child_default, &nested), struct_ident);
+
+            assert_eq!(
+                parent_reference, child_definition,
+                "default_prefix {child_default:?}, prefix {command_prefix:?}, {struct_ident}"
+            );
+        }
+    }
 }
