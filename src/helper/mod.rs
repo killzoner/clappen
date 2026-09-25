@@ -1,10 +1,24 @@
 use proc_macro2::{Ident, Span};
 use quote::format_ident;
-use syn::parse::Parse;
+use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{LitStr, Result, Token, meta::ParseNestedMeta};
 
 pub(crate) mod prefix;
+
+// the prefix attribute keys, used by the parsers and by the error messages
+pub(crate) const PREFIX_ATTR: &str = "prefix";
+pub(crate) const DEFAULT_PREFIX_ATTR: &str = "default_prefix";
+
+// the value of a prefix, which is None when the prefix is empty
+pub(crate) trait PrefixValue {
+    fn value(&self) -> &Option<String>;
+
+    // the prefix as a string, empty when it has no value
+    fn as_str(&self) -> &str {
+        self.value().as_deref().unwrap_or_default()
+    }
+}
 
 // taken straight from paste crate (https://github.com/dtolnay/paste/blob/6a302522990cbfd9de4e0c61d91854622f7b2999/src/segment.rs#L176)
 fn snake_case(elt: &str) -> String {
@@ -71,23 +85,19 @@ pub(crate) fn parse_bracketed<T: Parse>(meta: &ParseNestedMeta) -> Result<Vec<T>
         .collect())
 }
 
-// a prefix built from an attribute's string value
-pub(crate) trait RawPrefix {
-    fn from_value(value: String) -> Self;
-}
-
-// a prefix attribute value, which must not be empty
-pub(crate) fn require_non_empty<P: RawPrefix>(attribute: LitStr, name: &Ident) -> Result<P> {
-    let value = attribute.value();
+// the value of a `name = ".."` attribute, which must not be empty
+fn parse_non_empty_literal(input: ParseStream, name: &str) -> Result<String> {
+    let literal: LitStr = input.parse()?;
+    let value = literal.value();
 
     if value.is_empty() {
         return Err(syn::Error::new(
-            attribute.span(),
+            literal.span(),
             format!("'{name}' must not be empty"),
         ));
     }
 
-    Ok(P::from_value(value))
+    Ok(value)
 }
 
 fn non_empty(value: String) -> Option<String> {

@@ -1,7 +1,12 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
+use syn::Result;
+use syn::parse::{Parse, ParseStream};
 
-use crate::helper::{RawPrefix, camel_case, non_empty, prefixed_ident, snake_case, snake_join};
+use crate::helper::{
+    DEFAULT_PREFIX_ATTR, PREFIX_ATTR, PrefixValue, camel_case, non_empty, parse_non_empty_literal,
+    prefixed_ident, snake_case, snake_join,
+};
 
 // holds the raw value of a `default_prefix = ".."` attribute
 #[derive(Default)]
@@ -9,14 +14,16 @@ pub(crate) struct DefaultPrefix {
     value: Option<String>,
 }
 
-impl RawPrefix for DefaultPrefix {
-    fn from_value(value: String) -> Self {
-        Self { value: Some(value) }
+impl Parse for DefaultPrefix {
+    fn parse(input: ParseStream) -> Result<Self> {
+        Ok(Self {
+            value: Some(parse_non_empty_literal(input, DEFAULT_PREFIX_ATTR)?),
+        })
     }
 }
 
-impl DefaultPrefix {
-    pub(crate) fn value(&self) -> &Option<String> {
+impl PrefixValue for DefaultPrefix {
+    fn value(&self) -> &Option<String> {
         &self.value
     }
 }
@@ -27,14 +34,16 @@ pub(crate) struct StructPrefix {
     value: Option<String>,
 }
 
-impl RawPrefix for StructPrefix {
-    fn from_value(value: String) -> Self {
-        Self { value: Some(value) }
+impl Parse for StructPrefix {
+    fn parse(input: ParseStream) -> Result<Self> {
+        Ok(Self {
+            value: Some(parse_non_empty_literal(input, PREFIX_ATTR)?),
+        })
     }
 }
 
-impl StructPrefix {
-    pub(crate) fn value(&self) -> &Option<String> {
+impl PrefixValue for StructPrefix {
+    fn value(&self) -> &Option<String> {
         &self.value
     }
 }
@@ -45,9 +54,11 @@ pub(crate) struct CommandPrefix {
     value: Option<String>,
 }
 
-impl RawPrefix for CommandPrefix {
-    fn from_value(value: String) -> Self {
-        Self { value: Some(value) }
+impl Parse for CommandPrefix {
+    fn parse(input: ParseStream) -> Result<Self> {
+        Ok(Self {
+            value: Some(parse_non_empty_literal(input, PREFIX_ATTR)?),
+        })
     }
 }
 
@@ -66,10 +77,6 @@ impl FieldPrefix {
         }
     }
 
-    pub(crate) fn value(&self) -> &Option<String> {
-        &self.value
-    }
-
     // struct field name with its prefix: `<prefix>_<name>`
     pub(crate) fn field_name(&self, name: &str) -> String {
         let Some(prefix) = &self.value else {
@@ -82,6 +89,12 @@ impl FieldPrefix {
     // type ident for a struct defined under this prefix
     pub(crate) fn type_ident(&self, base: &str) -> Ident {
         prefixed_ident(&self.value, base)
+    }
+}
+
+impl PrefixValue for FieldPrefix {
+    fn value(&self) -> &Option<String> {
+        &self.value
     }
 }
 

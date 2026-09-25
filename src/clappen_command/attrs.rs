@@ -4,8 +4,10 @@ use syn::parse::{Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{Ident, Path, Token, Type};
 
-use crate::helper;
-use crate::helper::prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix};
+use crate::helper::{
+    self, PREFIX_ATTR,
+    prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix},
+};
 
 pub(crate) enum NestedAttribute {
     Apply(TokenStream),
@@ -25,10 +27,7 @@ impl Parse for NestedAttribute {
                 let path: Path = input.parse()?;
                 Ok(NestedAttribute::Apply(quote! { #dollar #path }))
             }
-            "prefix" => Ok(NestedAttribute::Prefix(helper::require_non_empty(
-                input.parse()?,
-                &keyword,
-            )?)),
+            PREFIX_ATTR => Ok(NestedAttribute::Prefix(input.parse()?)),
             _ => Err(syn::Error::new(keyword.span(), "unknown attribute")),
         }
     }
