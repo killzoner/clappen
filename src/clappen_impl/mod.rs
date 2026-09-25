@@ -1,5 +1,7 @@
 use syn::Ident;
 
+use crate::helper::prefix::{DefaultPrefix, StructPrefix};
+
 pub(crate) mod attrs;
 pub(crate) mod item_impl;
 
@@ -7,8 +9,8 @@ pub(crate) mod item_impl;
 pub(crate) trait ProcessItem {
     fn process(
         &mut self,
-        default_prefix: Option<String>,
-        prefix: Option<String>,
+        default_prefix: DefaultPrefix,
+        prefix: StructPrefix,
         prefixed_fields: Vec<Ident>,
     ) -> syn::Result<proc_macro2::TokenStream>;
 }

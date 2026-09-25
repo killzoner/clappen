@@ -5,11 +5,11 @@ use syn::spanned::Spanned;
 use syn::{Ident, Path, Token, Type};
 
 use crate::helper;
+use crate::helper::prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix};
 
-#[derive(Clone)]
 pub(crate) enum NestedAttributes {
     Apply(TokenStream),
-    Prefix(Option<String>),
+    Prefix(CommandPrefix),
 }
 
 impl Parse for NestedAttributes {
@@ -25,11 +25,10 @@ impl Parse for NestedAttributes {
                 let path: Path = input.parse()?;
                 Ok(NestedAttributes::Apply(quote! { #dollar #path }))
             }
-            k if k == "prefix" => {
-                let prefix = helper::require_non_empty(input.parse()?, k)?;
-
-                Ok(NestedAttributes::Prefix(Some(prefix)))
-            }
+            k if k == "prefix" => Ok(NestedAttributes::Prefix(helper::require_non_empty(
+                input.parse()?,
+                k,
+            )?)),
             e => Err(syn::Error::new(
                 keyword.span(),
                 format!("unknown attribute field '{e}'"),
@@ -38,40 +37,28 @@ impl Parse for NestedAttributes {
     }
 }
 
-#[derive(Clone)]
 pub(crate) struct Attributes {
     pub apply: TokenStream,
-    pub prefix: Option<String>,
+    pub prefix: CommandPrefix,
 }
 
 impl TryFrom<Vec<NestedAttributes>> for Attributes {
     type Error = ();
 
     fn try_from(fields: Vec<NestedAttributes>) -> std::result::Result<Self, Self::Error> {
-        let macro_uses: Vec<_> = fields
-            .iter()
-            .flat_map(|e| match e {
-                NestedAttributes::Apply(e) => Some(e),
-                _ => None,
-            })
-            .collect();
+        let mut apply = None;
+        let mut prefix = None;
 
-        let macro_use = match macro_uses.first() {
-            Some(e) => e,
-            None => return Err(()),
-        };
-
-        let field_prefix: Vec<_> = fields
-            .iter()
-            .flat_map(|ref e| match e {
-                NestedAttributes::Prefix(e) => e,
-                _ => &None,
-            })
-            .collect();
+        for field in fields {
+            match field {
+                NestedAttributes::Apply(e) => apply = apply.or(Some(e)),
+                NestedAttributes::Prefix(e) => prefix = prefix.or(Some(e)),
+            }
+        }
 
         Ok(Attributes {
-            apply: macro_use.to_owned().clone(),
-            prefix: field_prefix.first().map(|e| (*e).to_owned()),
+            apply: apply.ok_or(())?,
+            prefix: prefix.unwrap_or_default(),
         })
     }
 }
@@ -79,13 +66,13 @@ impl TryFrom<Vec<NestedAttributes>> for Attributes {
 impl Attributes {
     pub(crate) fn nested_macro_call(
         &self,
-        default_prefix: &Option<String>,
-        struct_prefix: &Option<String>,
+        default_prefix: &DefaultPrefix,
+        struct_prefix: &StructPrefix,
         field_ident: &Ident,
         field_type: &Type,
     ) -> (TokenStream, TokenStream) {
         let apply = &self.apply;
-        let nested_prefix = helper::nested_step_prefix(&self.prefix, default_prefix, struct_prefix);
+        let nested_prefix = NestedPrefix::new(&self.prefix, default_prefix, struct_prefix);
         let module_name = helper::macro_module_name(&field_ident.to_string());
         let new_type_full_ref =
             Self::new_full_type_definition(&module_name, &nested_prefix, field_type);
@@ -102,7 +89,7 @@ impl Attributes {
 
     fn new_full_type_definition(
         module_name: &Ident,
-        nested_prefix: &Option<String>,
+        nested_prefix: &NestedPrefix,
         field_type: &Type,
     ) -> TokenStream {
         // allow for fully qualified type notation, needed for $crate::something
@@ -123,7 +110,7 @@ impl Attributes {
             }
         };
 
-        let field_type = helper::prefixed_ident(nested_prefix, &field_type.to_string());
+        let field_type = nested_prefix.type_ident(&field_type.to_string());
 
         quote! {
             #module_name::#field_type
