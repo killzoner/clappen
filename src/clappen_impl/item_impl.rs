@@ -4,7 +4,10 @@ use std::str::FromStr;
 use syn::{Ident, ItemImpl, Type, parse_quote};
 
 use crate::clappen_impl::ProcessItem;
-use crate::helper::prefix::{DefaultPrefix, FieldPrefix, StructPrefix};
+use crate::helper::{
+    PrefixValue,
+    prefix::{DefaultPrefix, FieldPrefix, StructPrefix},
+};
 
 impl ProcessItem for ItemImpl {
     fn process(

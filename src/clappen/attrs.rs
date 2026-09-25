@@ -1,8 +1,7 @@
 use syn::spanned::Spanned;
 use syn::{Ident, Result, meta::ParseNestedMeta};
 
-use crate::helper;
-use crate::helper::prefix::DefaultPrefix;
+use crate::helper::{DEFAULT_PREFIX_ATTR, prefix::DefaultPrefix};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
@@ -23,8 +22,8 @@ impl Attributes {
 
                 Ok(())
             }
-            "default_prefix" => {
-                self.default_prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?;
+            DEFAULT_PREFIX_ATTR => {
+                self.default_prefix = meta.value()?.parse()?;
 
                 Ok(())
             }

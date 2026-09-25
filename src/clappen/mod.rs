@@ -3,6 +3,8 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Item;
 
+use crate::helper::PrefixValue;
+
 pub(crate) mod attrs;
 
 pub(crate) fn create_template(

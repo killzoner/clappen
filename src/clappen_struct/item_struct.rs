@@ -10,7 +10,10 @@ use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
     FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
 };
-use crate::helper::prefix::{DefaultPrefix, FieldPrefix, StructPrefix};
+use crate::helper::{
+    PrefixValue,
+    prefix::{DefaultPrefix, FieldPrefix, StructPrefix},
+};
 
 impl ProcessItem for ItemStruct {
     fn process(
@@ -139,11 +142,8 @@ impl ProcessItem for ItemStruct {
             .collect();
 
         let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
-        let doc_prefix = format!("'{}'", struct_prefix.value().as_deref().unwrap_or_default());
-        let doc_default_prefix = format!(
-            "'{}'",
-            default_prefix.value().as_deref().unwrap_or_default()
-        );
+        let doc_prefix = format!("'{}'", struct_prefix.as_str());
+        let doc_default_prefix = format!("'{}'", default_prefix.as_str());
         let expanded = self;
 
         Ok(quote! {

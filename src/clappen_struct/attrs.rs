@@ -1,8 +1,10 @@
 use syn::spanned::Spanned;
 use syn::{Result, meta::ParseNestedMeta};
 
-use crate::helper;
-use crate::helper::prefix::{DefaultPrefix, StructPrefix};
+use crate::helper::{
+    DEFAULT_PREFIX_ATTR, PREFIX_ATTR,
+    prefix::{DefaultPrefix, StructPrefix},
+};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
@@ -17,10 +19,8 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => self.prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?,
-            "default_prefix" => {
-                self.default_prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?
-            }
+            PREFIX_ATTR => self.prefix = meta.value()?.parse()?,
+            DEFAULT_PREFIX_ATTR => self.default_prefix = meta.value()?.parse()?,
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };
 
