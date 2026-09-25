@@ -4,11 +4,11 @@ use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Ident, ItemStruct, Token, Type};
 
-use super::{
+use crate::clappen_command::attrs::NestedAttributes;
+use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
     FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
 };
-use crate::clappen_command::attrs::NestedAttributes;
 use crate::{clappen_command, helper};
 
 impl ProcessItem for ItemStruct {

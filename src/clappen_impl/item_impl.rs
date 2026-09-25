@@ -3,7 +3,7 @@ use quote::{ToTokens, quote};
 use std::str::FromStr;
 use syn::{Ident, ItemImpl, Type, parse_quote};
 
-use super::ProcessItem;
+use crate::clappen_impl::ProcessItem;
 use crate::helper;
 
 impl ProcessItem for ItemImpl {
