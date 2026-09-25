@@ -7,32 +7,29 @@ use syn::{Ident, Path, Token, Type};
 use crate::helper;
 use crate::helper::prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix};
 
-pub(crate) enum NestedAttributes {
+pub(crate) enum NestedAttribute {
     Apply(TokenStream),
     Prefix(CommandPrefix),
 }
 
-impl Parse for NestedAttributes {
+impl Parse for NestedAttribute {
     fn parse(input: ParseStream) -> Result<Self> {
         let keyword: Ident = input.parse()?;
         // Advance the iterator so that we can skip the '=' token
         let _eq_token: Token![=] = input.parse()?;
 
-        match &keyword {
-            k if k == "apply" => {
+        match keyword.to_string().as_str() {
+            "apply" => {
                 // parsed as a path, kept as tokens: `$crate::child` needs the `$`
                 let dollar: Option<Token![$]> = input.parse()?;
                 let path: Path = input.parse()?;
-                Ok(NestedAttributes::Apply(quote! { #dollar #path }))
+                Ok(NestedAttribute::Apply(quote! { #dollar #path }))
             }
-            k if k == "prefix" => Ok(NestedAttributes::Prefix(helper::require_non_empty(
+            "prefix" => Ok(NestedAttribute::Prefix(helper::require_non_empty(
                 input.parse()?,
-                k,
+                &keyword,
             )?)),
-            e => Err(syn::Error::new(
-                keyword.span(),
-                format!("unknown attribute field '{e}'"),
-            )),
+            _ => Err(syn::Error::new(keyword.span(), "unknown attribute")),
         }
     }
 }
@@ -42,17 +39,17 @@ pub(crate) struct Attributes {
     pub prefix: CommandPrefix,
 }
 
-impl TryFrom<Vec<NestedAttributes>> for Attributes {
+impl TryFrom<Vec<NestedAttribute>> for Attributes {
     type Error = ();
 
-    fn try_from(fields: Vec<NestedAttributes>) -> std::result::Result<Self, Self::Error> {
+    fn try_from(fields: Vec<NestedAttribute>) -> std::result::Result<Self, Self::Error> {
         let mut apply = None;
         let mut prefix = None;
 
         for field in fields {
             match field {
-                NestedAttributes::Apply(e) => apply = apply.or(Some(e)),
-                NestedAttributes::Prefix(e) => prefix = prefix.or(Some(e)),
+                NestedAttribute::Apply(e) => apply = apply.or(Some(e)),
+                NestedAttribute::Prefix(e) => prefix = prefix.or(Some(e)),
             }
         }
 

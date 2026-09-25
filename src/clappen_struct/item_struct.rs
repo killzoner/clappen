@@ -5,7 +5,7 @@ use syn::spanned::Spanned;
 use syn::{Ident, ItemStruct, Token, Type};
 
 use crate::clappen_command;
-use crate::clappen_command::attrs::NestedAttributes;
+use crate::clappen_command::attrs::NestedAttribute;
 use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
     FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
@@ -51,9 +51,9 @@ impl ProcessItem for ItemStruct {
                 if attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND) {
                     clappen_command = true;
 
-                    let meta: Punctuated<NestedAttributes, Token![,]> =
+                    let meta: Punctuated<NestedAttribute, Token![,]> =
                         attr.parse_args_with(Punctuated::parse_terminated)?;
-                    let meta: Vec<NestedAttributes> = meta.into_iter().collect();
+                    let meta: Vec<NestedAttribute> = meta.into_iter().collect();
 
                     let attrs: std::result::Result<clappen_command::attrs::Attributes, ()> =
                         meta.try_into();
