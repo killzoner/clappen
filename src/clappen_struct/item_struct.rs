@@ -4,27 +4,28 @@ use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Ident, ItemStruct, Token, Type};
 
+use crate::clappen_command;
 use crate::clappen_command::attrs::NestedAttributes;
 use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
     FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
 };
-use crate::{clappen_command, helper};
+use crate::helper::prefix::{DefaultPrefix, FieldPrefix, StructPrefix};
 
 impl ProcessItem for ItemStruct {
     fn process(
         &mut self,
-        default_prefix: Option<String>,
-        struct_prefix: Option<String>,
+        default_prefix: DefaultPrefix,
+        struct_prefix: StructPrefix,
     ) -> syn::Result<TokenStream> {
         let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
         let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
 
-        let prefix = helper::field_prefix(&default_prefix, &struct_prefix);
+        let field_prefix = FieldPrefix::new(&default_prefix, &struct_prefix);
 
         // handle struct prefix
-        if prefix.is_some() {
-            self.ident = helper::prefixed_ident(&prefix, &self.ident.to_string());
+        if field_prefix.value().is_some() {
+            self.ident = field_prefix.type_ident(&self.ident.to_string());
         }
 
         for field in self.fields.iter_mut() {
@@ -87,7 +88,7 @@ impl ProcessItem for ItemStruct {
                 ));
             };
 
-            let prefixed = helper::prefixed_field(&prefix, &ident.to_string());
+            let prefixed = field_prefix.field_name(&ident.to_string());
             field.ident = Some(Ident::new(&prefixed, Span::call_site()));
 
             // Handle nested field definitions with macro uses.
@@ -138,8 +139,11 @@ impl ProcessItem for ItemStruct {
             .collect();
 
         let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
-        let doc_prefix = format!("'{}'", struct_prefix.as_deref().unwrap_or_default());
-        let doc_default_prefix = format!("'{}'", default_prefix.as_deref().unwrap_or_default());
+        let doc_prefix = format!("'{}'", struct_prefix.value().as_deref().unwrap_or_default());
+        let doc_default_prefix = format!(
+            "'{}'",
+            default_prefix.value().as_deref().unwrap_or_default()
+        );
         let expanded = self;
 
         Ok(quote! {

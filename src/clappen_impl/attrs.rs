@@ -2,12 +2,13 @@ use syn::spanned::Spanned;
 use syn::{Ident, Result, meta::ParseNestedMeta};
 
 use crate::helper;
+use crate::helper::prefix::{DefaultPrefix, StructPrefix};
 
 #[derive(Default)]
 pub(crate) struct Attributes {
-    pub prefix: Option<String>,
+    pub prefix: StructPrefix,
     pub prefixed_fields: Vec<Ident>,
-    pub default_prefix: Option<String>,
+    pub default_prefix: DefaultPrefix,
 }
 
 impl Attributes {
@@ -17,13 +18,10 @@ impl Attributes {
         };
 
         match ident.to_string().as_str() {
-            "prefix" => {
-                self.prefix = Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
-            }
+            "prefix" => self.prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?,
             "prefixed_fields" => self.prefixed_fields = helper::parse_bracketed(&meta)?,
             "default_prefix" => {
-                self.default_prefix =
-                    Some(helper::require_non_empty(meta.value()?.parse()?, ident)?)
+                self.default_prefix = helper::require_non_empty(meta.value()?.parse()?, ident)?
             }
             _ => Err(syn::Error::new(ident.span(), "unknown attribute"))?,
         };

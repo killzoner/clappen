@@ -1,3 +1,5 @@
+use crate::helper::prefix::{DefaultPrefix, StructPrefix};
+
 pub(crate) mod attrs;
 pub(crate) mod item_struct;
 
@@ -12,7 +14,7 @@ const FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN: &str = "flatten";
 pub(crate) trait ProcessItem {
     fn process(
         &mut self,
-        default_prefix: Option<String>,
-        prefix: Option<String>,
+        default_prefix: DefaultPrefix,
+        prefix: StructPrefix,
     ) -> syn::Result<proc_macro2::TokenStream>;
 }

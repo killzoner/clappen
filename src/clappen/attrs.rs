@@ -2,11 +2,12 @@ use syn::spanned::Spanned;
 use syn::{Ident, Result, meta::ParseNestedMeta};
 
 use crate::helper;
+use crate::helper::prefix::DefaultPrefix;
 
 #[derive(Default)]
 pub(crate) struct Attributes {
     pub export: Option<Ident>,
-    pub default_prefix: String,
+    pub default_prefix: DefaultPrefix,
 }
 
 impl Attributes {

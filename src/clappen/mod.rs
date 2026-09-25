@@ -19,10 +19,11 @@ pub(crate) fn create_template(
         Err(e) => return e,
     };
 
-    let default_prefix = &attrs.default_prefix;
+    let default_prefix = attrs.default_prefix.value();
     // no key when the module has no default prefix
-    let default_prefix_arg =
-        (!default_prefix.is_empty()).then(|| quote! { , default_prefix = #default_prefix });
+    let default_prefix_arg = default_prefix
+        .as_ref()
+        .map(|e| quote! { , default_prefix = #e });
 
     let unknown_items: Vec<_> = items
         .iter()
@@ -100,7 +101,7 @@ pub(crate) fn create_template(
         .collect();
 
     let default = match default_prefix {
-        e if e.is_empty() => {
+        None => {
             quote! {
                 #(#use_items)*
                 #[clappen::__clappen_struct]
@@ -108,7 +109,7 @@ pub(crate) fn create_template(
                 #(#default_item_impls)*
             }
         }
-        _ => {
+        Some(default_prefix) => {
             quote! {
                 #(#use_items)*
                 #[clappen::__clappen_struct(default_prefix = #default_prefix)]
