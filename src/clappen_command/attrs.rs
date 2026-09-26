@@ -1,15 +1,18 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream, Result};
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Ident, Path, Token, Type};
 
+use crate::clappen_command::{FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY};
 use crate::helper::{
     self, PREFIX_ATTR,
     prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix},
 };
 
-pub(crate) enum NestedAttribute {
+// One `name = value` pair. `syn::meta::parser` would need owned tokens and lose the error span.
+enum NestedAttribute {
     Apply(TokenStream),
     Prefix(CommandPrefix),
 }
@@ -21,7 +24,7 @@ impl Parse for NestedAttribute {
         let _eq_token: Token![=] = input.parse()?;
 
         match keyword.to_string().as_str() {
-            "apply" => {
+            FIELD_ATTR_CLAPPEN_COMMAND_APPLY => {
                 // parsed as a path, kept as tokens: `$crate::child` needs the `$`
                 let dollar: Option<Token![$]> = input.parse()?;
                 let path: Path = input.parse()?;
@@ -38,24 +41,32 @@ pub(crate) struct Attributes {
     pub prefix: CommandPrefix,
 }
 
-impl TryFrom<Vec<NestedAttribute>> for Attributes {
-    type Error = ();
+impl Parse for Attributes {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let span = input.span();
 
-    fn try_from(fields: Vec<NestedAttribute>) -> std::result::Result<Self, Self::Error> {
+        let fields = Punctuated::<NestedAttribute, Token![,]>::parse_terminated(input)?;
+
         let mut apply = None;
-        let mut prefix = None;
+        let mut prefix = CommandPrefix::default();
 
         for field in fields {
             match field {
-                NestedAttribute::Apply(e) => apply = apply.or(Some(e)),
-                NestedAttribute::Prefix(e) => prefix = prefix.or(Some(e)),
+                NestedAttribute::Apply(e) => apply = Some(e),
+                NestedAttribute::Prefix(e) => prefix = e,
             }
         }
 
-        Ok(Attributes {
-            apply: apply.ok_or(())?,
-            prefix: prefix.unwrap_or_default(),
-        })
+        let apply = apply.ok_or_else(|| {
+            syn::Error::new(
+                span,
+                format!(
+                    "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided"
+                ),
+            )
+        })?;
+
+        Ok(Attributes { apply, prefix })
     }
 }
 

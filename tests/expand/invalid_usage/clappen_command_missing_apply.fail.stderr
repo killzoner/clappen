@@ -1,0 +1,5 @@
+error: 'apply' must be specified when #[clappen_command] is provided
+  --> tests/expand/invalid_usage/clappen_command_missing_apply.fail.rs:17:27
+   |
+17 |         #[clappen_command(prefix = "db")]
+   |                           ^^^^^^

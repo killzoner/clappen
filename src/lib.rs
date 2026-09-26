@@ -24,44 +24,28 @@ use syn::{ItemImpl, ItemMod, ItemStruct, parse_macro_input};
 #[proc_macro_attribute]
 pub fn __clappen_struct(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle attributes
-    let cloned_args = args.clone();
-    let mut attrs = clappen_struct::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
+    let attrs = parse_macro_input!(args as clappen_struct::attrs::Attributes);
 
     // handle fields
     let item = parse_macro_input!(target as ItemStruct);
 
-    let expanded = clappen_struct::item_struct::expand(item, attrs);
-
-    let expanded = match expanded {
-        Ok(e) => e,
-        Err(e) => e.to_compile_error(),
-    };
-
-    expanded.into()
+    clappen_struct::item_struct::expand(item, attrs)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
 
 #[doc(hidden)]
 #[proc_macro_attribute]
 pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle attributes
-    let cloned_args = args.clone();
-    let mut attrs = clappen_impl::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
+    let attrs = parse_macro_input!(args as clappen_impl::attrs::Attributes);
 
     // handle fields
     let item = parse_macro_input!(target as ItemImpl);
 
-    let expanded = clappen_impl::item_impl::expand(item, attrs);
-
-    let expanded = match expanded {
-        Ok(e) => e,
-        Err(e) => e.to_compile_error(),
-    };
-
-    expanded.into()
+    clappen_impl::item_impl::expand(item, attrs)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
 
 /// Generates the macro defining prefixed struct.
@@ -80,22 +64,19 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 /// Prefixes are preserved across multiple levels of nested structs.
 #[proc_macro_attribute]
 pub fn clappen(args: TokenStream, target: TokenStream) -> TokenStream {
-    // handle attributes
-    let cloned_args = args.clone();
-    let mut attrs = clappen::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
-
     // handle mod definition
     let target2: proc_macro2::TokenStream = target.clone().into();
-    let items = parse_macro_input!(target as ItemMod).content.ok_or(
-        syn::Error::new_spanned(target2, "clappen must be used on mod only").to_compile_error(),
-    );
-
-    let items = match items {
-        Ok(e) => e.1,
-        Err(e) => return TokenStream::from(e),
+    let Some(content) = parse_macro_input!(target as ItemMod).content else {
+        return syn::Error::new_spanned(target2, "clappen must be used on mod only")
+            .into_compile_error()
+            .into();
     };
+
+    let items = content.1;
+
+    // handle attributes
+    let cloned_args = args.clone();
+    let attrs = parse_macro_input!(cloned_args as clappen::attrs::Attributes);
 
     clappen::create_template(args.into(), attrs, items).into()
 }

@@ -12,14 +12,7 @@ pub(crate) fn create_template(
     attrs: Attributes,
     items: Vec<Item>,
 ) -> TokenStream {
-    let export_name = attrs.export.ok_or(
-        syn::Error::new_spanned(&args, "clappen 'export' attribute not found").to_compile_error(),
-    );
-
-    let export_macro = match export_name {
-        Ok(e) => e,
-        Err(e) => return e,
-    };
+    let export_macro = attrs.export;
 
     let default_prefix = attrs.default_prefix.value();
     // no key when the module has no default prefix

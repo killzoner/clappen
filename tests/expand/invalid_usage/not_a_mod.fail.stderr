@@ -1,0 +1,5 @@
+error: expected `mod`
+ --> tests/expand/invalid_usage/not_a_mod.fail.rs:2:1
+  |
+2 | fn options() {}
+  | ^^
