@@ -7,149 +7,145 @@ use syn::{Ident, ItemStruct, Token, Type};
 use crate::clappen_command::{self, attrs::NestedAttribute};
 use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
-    FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
+    FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, attrs,
 };
-use crate::helper::{
-    PrefixValue,
-    prefix::{DefaultPrefix, FieldPrefix, StructPrefix},
-};
+use crate::helper::{PrefixValue, prefix::FieldPrefix};
 
-impl ProcessItem for ItemStruct {
-    fn process(
-        &mut self,
-        default_prefix: DefaultPrefix,
-        struct_prefix: StructPrefix,
-    ) -> syn::Result<TokenStream> {
-        let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
-        let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
+// Prefixes the struct and its fields, and emits one macro call per nested field.
+pub(crate) fn expand(mut item: ItemStruct, attrs: attrs::Attributes) -> syn::Result<TokenStream> {
+    let attrs::Attributes {
+        prefix: struct_prefix,
+        default_prefix,
+    } = attrs;
 
-        let field_prefix = FieldPrefix::new(&default_prefix, &struct_prefix);
+    let mut nested_macro_uses: Vec<clappen_command::attrs::Attributes> = Vec::new();
+    let mut nested_macro_calls: Vec<TokenStream> = Vec::new();
 
-        // handle struct prefix
-        if field_prefix.value().is_some() {
-            self.ident = field_prefix.type_ident(&self.ident.to_string());
-        }
+    let field_prefix = FieldPrefix::new(&default_prefix, &struct_prefix);
 
-        for field in self.fields.iter_mut() {
-            // handle clappen_command arguments
-            let mut command_clap_flatten = false;
-            let mut clappen_command = false;
-            let mut clappen_command_attributes: Option<clappen_command::attrs::Attributes> = None;
-
-            // Check that we don't have a clap flatten without config
-            for attr in &field.attrs {
-                // parse #[command(flatten)] only, sub commands are still allowed
-                if attr.path().is_ident(FIELD_ATTR_CLAP_FLATTEN_COMMAND) {
-                    let _ = attr.parse_nested_meta(|meta| {
-                        if meta.path.is_ident(FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN) {
-                            command_clap_flatten = true;
-                        }
-
-                        Ok(())
-                    });
-                }
-
-                // parse clappen_command arguments
-                if attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND) {
-                    clappen_command = true;
-
-                    let meta: Punctuated<NestedAttribute, Token![,]> =
-                        attr.parse_args_with(Punctuated::parse_terminated)?;
-                    let meta: Vec<NestedAttribute> = meta.into_iter().collect();
-
-                    let attrs: std::result::Result<clappen_command::attrs::Attributes, ()> =
-                        meta.try_into();
-
-                    clappen_command_attributes = attrs.ok();
-                }
-            }
-
-            if command_clap_flatten && !clappen_command {
-                return Err(syn::Error::new(
-                    field.span(),
-                    format!(
-                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[command(flatten)] is provided for clap",
-                    ),
-                ));
-            }
-
-            if clappen_command && clappen_command_attributes.is_none() {
-                return Err(syn::Error::new(
-                    field.span(),
-                    format!(
-                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided",
-                    ),
-                ));
-            }
-
-            // handle fields prefix
-            let Some(ident) = &field.ident else {
-                return Err(syn::Error::new(
-                    field.span(),
-                    "Ident field could not be parsed",
-                ));
-            };
-
-            let prefixed = field_prefix.field_name(&ident.to_string());
-            field.ident = Some(Ident::new(&prefixed, Span::call_site()));
-
-            // Handle nested field definitions with macro uses.
-            if let (Some(command_attrs), Some(field_ident)) =
-                (clappen_command_attributes, &field.ident)
-            {
-                let (new_macro_call, new_type_full) = command_attrs.nested_macro_call(
-                    &default_prefix,
-                    &struct_prefix,
-                    field_ident,
-                    &field.ty,
-                );
-
-                nested_macro_calls.push(new_macro_call);
-                nested_macro_uses.push(command_attrs);
-
-                // replace field type with new type
-                let ty: Result<Type, syn::Error> = syn::parse2(new_type_full);
-                match ty {
-                    Ok(ty) => {
-                        field.ty = ty;
-                    }
-                    Err(e) => {
-                        return Err(syn::Error::new(
-                            field.ty.span(),
-                            format!(
-                                "{}: unable to rewrite field '{}' type '{}' to new type",
-                                e,
-                                field.ident.to_token_stream(),
-                                field.ty.to_token_stream(),
-                            ),
-                        ));
-                    }
-                }
-            }
-        }
-
-        // Clean the attributes from the original struct
-        self.fields.iter_mut().for_each(|field| {
-            field
-                .attrs
-                .retain(|attr| !attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND));
-        });
-
-        let debug_nested_macro_uses: Vec<_> = nested_macro_uses
-            .iter()
-            .map(|e: &clappen_command::attrs::Attributes| e.apply.to_string())
-            .collect();
-
-        let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
-        let doc_prefix = format!("'{}'", struct_prefix.as_str());
-        let doc_default_prefix = format!("'{}'", default_prefix.as_str());
-        let expanded = self;
-
-        Ok(quote! {
-            #(#nested_macro_calls)*
-            #[doc=concat!(concat!(" Macros used for nested struct definition : [", #debug_nested_macro_uses, "]"))]
-            #[doc=concat!(" Struct with prefix ", #doc_prefix, ", default_prefix: ", #doc_default_prefix)]
-            #expanded
-        })
+    // handle struct prefix
+    if field_prefix.value().is_some() {
+        item.ident = field_prefix.type_ident(&item.ident.to_string());
     }
+
+    for field in item.fields.iter_mut() {
+        // handle clappen_command arguments
+        let mut command_clap_flatten = false;
+        let mut clappen_command = false;
+        let mut clappen_command_attributes: Option<clappen_command::attrs::Attributes> = None;
+
+        // Check that we don't have a clap flatten without config
+        for attr in &field.attrs {
+            // parse #[command(flatten)] only, sub commands are still allowed
+            if attr.path().is_ident(FIELD_ATTR_CLAP_FLATTEN_COMMAND) {
+                let _ = attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident(FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN) {
+                        command_clap_flatten = true;
+                    }
+
+                    Ok(())
+                });
+            }
+
+            // parse clappen_command arguments
+            if attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND) {
+                clappen_command = true;
+
+                let meta: Punctuated<NestedAttribute, Token![,]> =
+                    attr.parse_args_with(Punctuated::parse_terminated)?;
+                let meta: Vec<NestedAttribute> = meta.into_iter().collect();
+
+                let attrs: std::result::Result<clappen_command::attrs::Attributes, ()> =
+                    meta.try_into();
+
+                clappen_command_attributes = attrs.ok();
+            }
+        }
+
+        if command_clap_flatten && !clappen_command {
+            return Err(syn::Error::new(
+                field.span(),
+                format!(
+                    "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[command(flatten)] is provided for clap",
+                ),
+            ));
+        }
+
+        if clappen_command && clappen_command_attributes.is_none() {
+            return Err(syn::Error::new(
+                field.span(),
+                format!(
+                    "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided",
+                ),
+            ));
+        }
+
+        // handle fields prefix
+        let Some(ident) = &field.ident else {
+            return Err(syn::Error::new(
+                field.span(),
+                "Ident field could not be parsed",
+            ));
+        };
+
+        let prefixed = field_prefix.field_name(&ident.to_string());
+        field.ident = Some(Ident::new(&prefixed, Span::call_site()));
+
+        // Handle nested field definitions with macro uses.
+        if let (Some(command_attrs), Some(field_ident)) = (clappen_command_attributes, &field.ident)
+        {
+            let (new_macro_call, new_type_full) = command_attrs.nested_macro_call(
+                &default_prefix,
+                &struct_prefix,
+                field_ident,
+                &field.ty,
+            );
+
+            nested_macro_calls.push(new_macro_call);
+            nested_macro_uses.push(command_attrs);
+
+            // replace field type with new type
+            let ty: Result<Type, syn::Error> = syn::parse2(new_type_full);
+            match ty {
+                Ok(ty) => {
+                    field.ty = ty;
+                }
+                Err(e) => {
+                    return Err(syn::Error::new(
+                        field.ty.span(),
+                        format!(
+                            "{}: unable to rewrite field '{}' type '{}' to new type",
+                            e,
+                            field.ident.to_token_stream(),
+                            field.ty.to_token_stream(),
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+
+    // Clean the attributes from the original struct
+    item.fields.iter_mut().for_each(|field| {
+        field
+            .attrs
+            .retain(|attr| !attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND));
+    });
+
+    let debug_nested_macro_uses: Vec<_> = nested_macro_uses
+        .iter()
+        .map(|e: &clappen_command::attrs::Attributes| e.apply.to_string())
+        .collect();
+
+    let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
+    let doc_prefix = format!("'{}'", struct_prefix.as_str());
+    let doc_default_prefix = format!("'{}'", default_prefix.as_str());
+    let expanded = item;
+
+    Ok(quote! {
+        #(#nested_macro_calls)*
+        #[doc=concat!(concat!(" Macros used for nested struct definition : [", #debug_nested_macro_uses, "]"))]
+        #[doc=concat!(" Struct with prefix ", #doc_prefix, ", default_prefix: ", #doc_default_prefix)]
+        #expanded
+    })
 }

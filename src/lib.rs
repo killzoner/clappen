@@ -30,10 +30,9 @@ pub fn __clappen_struct(args: TokenStream, target: TokenStream) -> TokenStream {
     parse_macro_input!(cloned_args with attrs_parser);
 
     // handle fields
-    let mut item = parse_macro_input!(target as ItemStruct);
+    let item = parse_macro_input!(target as ItemStruct);
 
-    use clappen_struct::ProcessItem;
-    let expanded = item.process(attrs.default_prefix, attrs.prefix);
+    let expanded = clappen_struct::item_struct::expand(item, attrs);
 
     let expanded = match expanded {
         Ok(e) => e,
@@ -53,10 +52,9 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
     parse_macro_input!(cloned_args with attrs_parser);
 
     // handle fields
-    let mut item = parse_macro_input!(target as ItemImpl);
+    let item = parse_macro_input!(target as ItemImpl);
 
-    use clappen_impl::ProcessItem;
-    let expanded = item.process(attrs.default_prefix, attrs.prefix, attrs.prefixed_fields);
+    let expanded = clappen_impl::item_impl::expand(item, attrs);
 
     let expanded = match expanded {
         Ok(e) => e,
