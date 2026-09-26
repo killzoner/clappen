@@ -3,12 +3,10 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::{Ident, ItemImpl, ItemStruct, Token};
+use syn::{Ident, ItemImpl, ItemStruct};
 
-use crate::clappen_command::attrs::{Attributes as CommandAttributes, NestedAttribute};
-use crate::clappen_struct::{FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY};
+use crate::clappen_command::attrs::Attributes as CommandAttributes;
+use crate::clappen_struct::FIELD_ATTR_CLAPPEN_COMMAND;
 use crate::clappen_template_impl::{
     IMPL_ATTR_CLAPPEN_TEMPLATE,
     attrs::{ChainStepTokens, TemplateTags},
@@ -240,18 +238,7 @@ fn collect_nested_fields(struct_def: &ItemStruct) -> syn::Result<Vec<NestedField
         let Some(field_ident) = field.ident.clone() else {
             continue;
         };
-        let metas =
-            attr.parse_args_with(Punctuated::<NestedAttribute, Token![,]>::parse_terminated)?;
-        let cmd: CommandAttributes = metas
-            .into_iter()
-            .collect::<Vec<_>>()
-            .try_into()
-            .map_err(|()| {
-                syn::Error::new(
-                    attr.span(),
-                    format!("'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided"),
-                )
-            })?;
+        let cmd: CommandAttributes = attr.parse_args()?;
         nested.push((cmd.apply, cmd.prefix, field_ident));
     }
     Ok(nested)

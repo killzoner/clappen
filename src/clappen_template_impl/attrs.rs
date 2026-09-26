@@ -1,26 +1,27 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, format_ident, quote};
-use syn::parse::{Parse, ParseStream};
+use syn::parse::{Parse, ParseStream, Parser};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Attribute, Ident, LitStr, Meta, Result, Token, meta::ParseNestedMeta};
+use syn::{Attribute, Ident, LitStr, Meta, Result, Token};
 
-use crate::clappen_template_impl::{BASE_TAG_ATTR, PREFIXED_TAG_ATTR};
+use crate::clappen_template_impl::{
+    BASE_TAG_ATTR, DEFAULT_BASE_TAG, DEFAULT_PREFIXED_TAG, PREFIXED_TAG_ATTR,
+};
 use crate::helper::{
     self, DEFAULT_PREFIX_ATTR, PREFIX_ATTR, PrefixValue,
     prefix::{CommandPrefix, DefaultPrefix, StructPrefix},
 };
 
-#[derive(Default)]
 pub(crate) struct Attributes {
     pub prefix: StructPrefix,
     // this struct's own default_prefix
     pub default_prefix: DefaultPrefix,
     // canonical struct ident, forwarded automatically by the clappen macro
-    pub struct_ident: Option<Ident>,
-    // template tag idents, overridable by the user (default Base/Prefixed)
-    pub base_tag: Option<Ident>,
-    pub prefixed_tag: Option<Ident>,
+    pub struct_ident: Ident,
+    // template tag idents, the user's overrides or the Base/Prefixed defaults
+    pub base_tag: Ident,
+    pub prefixed_tag: Ident,
     // nesting path from the top struct down to this one, one step per flatten level
     // (empty when flat)
     pub chain: Vec<ChainStep>,
@@ -78,26 +79,52 @@ impl ToTokens for ChainStepTokens<'_> {
     }
 }
 
-impl Attributes {
-    pub fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
-        let Some(ident) = meta.path.get_ident() else {
-            return Err(syn::Error::new(meta.path.span(), "expected an identifier"));
-        };
+// `struct_ident` is mandatory, the two tags fall back to Base/Prefixed
+impl Parse for Attributes {
+    fn parse(input: ParseStream) -> Result<Self> {
+        // kept whole to span the error for a key that never arrives
+        let args = input.parse::<TokenStream>()?;
 
-        match ident.to_string().as_str() {
-            PREFIX_ATTR => self.prefix = meta.value()?.parse()?,
-            DEFAULT_PREFIX_ATTR => self.default_prefix = meta.value()?.parse()?,
-            "struct_ident" => self.struct_ident = Some(meta.value()?.parse()?),
-            BASE_TAG_ATTR => self.base_tag = Some(meta.value()?.parse()?),
-            PREFIXED_TAG_ATTR => self.prefixed_tag = Some(meta.value()?.parse()?),
-            "chain" => self
-                .chain
-                .extend(helper::parse_bracketed::<ChainStep>(&meta)?),
-            "prefixed_fields" => self.prefixed_fields = helper::parse_bracketed(&meta)?,
-            _ => return Err(syn::Error::new(ident.span(), "unknown attribute")),
-        };
+        let mut prefix = StructPrefix::default();
+        let mut default_prefix = DefaultPrefix::default();
+        let mut struct_ident = None;
+        let mut base_tag = None;
+        let mut prefixed_tag = None;
+        let mut chain: Vec<ChainStep> = Vec::new();
+        let mut prefixed_fields = Vec::new();
 
-        Ok(())
+        syn::meta::parser(|meta| {
+            let Some(ident) = meta.path.get_ident() else {
+                return Err(syn::Error::new(meta.path.span(), "expected an identifier"));
+            };
+
+            match ident.to_string().as_str() {
+                PREFIX_ATTR => prefix = meta.value()?.parse()?,
+                DEFAULT_PREFIX_ATTR => default_prefix = meta.value()?.parse()?,
+                "struct_ident" => struct_ident = Some(meta.value()?.parse()?),
+                BASE_TAG_ATTR => base_tag = Some(meta.value()?.parse()?),
+                PREFIXED_TAG_ATTR => prefixed_tag = Some(meta.value()?.parse()?),
+                "chain" => chain.extend(helper::parse_bracketed::<ChainStep>(&meta)?),
+                "prefixed_fields" => prefixed_fields = helper::parse_bracketed(&meta)?,
+                _ => return Err(syn::Error::new(ident.span(), "unknown attribute")),
+            };
+
+            Ok(())
+        })
+        .parse2(args.clone())?;
+
+        Ok(Self {
+            prefix,
+            default_prefix,
+            struct_ident: struct_ident.ok_or_else(|| {
+                syn::Error::new_spanned(&args, "clappen_template_impl requires `struct_ident`")
+            })?,
+            base_tag: base_tag.unwrap_or_else(|| Ident::new(DEFAULT_BASE_TAG, Span::call_site())),
+            prefixed_tag: prefixed_tag
+                .unwrap_or_else(|| Ident::new(DEFAULT_PREFIXED_TAG, Span::call_site())),
+            chain,
+            prefixed_fields,
+        })
     }
 }
 
@@ -214,7 +241,6 @@ impl ToTokens for TemplateTags {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proc_macro2::Span;
 
     fn step(command_prefix: Option<&str>, field: &str, parent_default: Option<&str>) -> ChainStep {
         ChainStep {
@@ -224,6 +250,18 @@ mod tests {
             parent_default: parent_default
                 .map_or_else(DefaultPrefix::default, helper::parse_literal),
         }
+    }
+
+    // `struct_ident` has no default, so the attributes cannot be built without it
+    #[test]
+    fn attributes_require_struct_ident() {
+        let Err(err) = syn::parse2::<Attributes>(quote! { prefix = "svc" }) else {
+            panic!("`struct_ident` is mandatory, so parsing without it must fail");
+        };
+        assert_eq!(
+            err.to_string(),
+            "clappen_template_impl requires `struct_ident`"
+        );
     }
 
     // every step shape the emitter writes must parse back to the step it came from

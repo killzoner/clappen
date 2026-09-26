@@ -1,0 +1,7 @@
+error: clappen 'export' attribute not found
+ --> tests/expand/invalid_usage/missing_export.fail.rs:1:1
+  |
+1 | #[clappen::clappen]
+  | ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `clappen::clappen` (in Nightly builds, run with -Z macro-backtrace for more info)

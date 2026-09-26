@@ -1,81 +1,69 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, ItemImpl};
+use syn::ItemImpl;
 
+use crate::clappen_template_impl::attrs;
 use crate::clappen_template_impl::resolve::ResolvedTag;
 use crate::clappen_template_impl::rewrite::substitute;
-use crate::clappen_template_impl::{DEFAULT_BASE_TAG, DEFAULT_PREFIXED_TAG, attrs};
 use crate::helper::{PrefixValue, prefix::StructPrefix};
 
-// Entry point: validate the forwarded attributes, resolve the two tags to concrete types, then
-// rewrite the impl body. Addressing lives in `resolve`, the body rewrite in `rewrite`.
-pub(crate) fn expand_template_impl(
-    item: ItemImpl,
-    attrs: attrs::Attributes,
-) -> syn::Result<TokenStream> {
-    let Some(struct_ident) = attrs.struct_ident else {
-        return Err(syn::Error::new(
-            Span::call_site(),
-            "clappen_template_impl requires `struct_ident`",
-        ));
-    };
-
-    let base_tag = attrs
-        .base_tag
-        .unwrap_or_else(|| Ident::new(DEFAULT_BASE_TAG, Span::call_site()));
-    let prefixed_tag = attrs
-        .prefixed_tag
-        .unwrap_or_else(|| Ident::new(DEFAULT_PREFIXED_TAG, Span::call_site()));
+// Entry point: resolve the two tags to concrete types, then rewrite the impl body. The attributes
+// arrive checked. Addressing lives in `resolve`, the body rewrite in `rewrite`.
+pub(crate) fn expand_template_impl(item: ItemImpl, attrs: attrs::Attributes) -> TokenStream {
+    let attrs::Attributes {
+        prefix,
+        default_prefix,
+        struct_ident,
+        base_tag,
+        prefixed_tag,
+        chain,
+        prefixed_fields,
+    } = attrs;
 
     // debug doc: which instantiation this impl belongs to (prefix + nesting path, `[]` when not nested)
-    let nesting: Vec<&str> = attrs
-        .chain
+    let nesting: Vec<&str> = chain
         .iter()
         .filter_map(|step| step.command_prefix.value().as_deref())
         .collect();
     let doc = format!(
         " Template impl for `{struct_ident}` (prefix '{}', nested via [{}])",
-        attrs.prefix.value().as_deref().unwrap_or_default(),
+        prefix.value().as_deref().unwrap_or_default(),
         nesting.join(".")
     );
 
     // an absent prefix means the base arm's child flatten call, where base is the struct's own
     // standalone type (drop the chain); a prefix means a prefixed instantiation, where base stays
     // nested (keep the chain).
-    let base_chain: &[attrs::ChainStep] = match attrs.prefix.value() {
-        Some(_) => &attrs.chain,
+    let base_chain: &[attrs::ChainStep] = match prefix.value() {
+        Some(_) => &chain,
         None => &[],
     };
     let base = ResolvedTag::new(
         StructPrefix::default(),
         base_chain,
-        &attrs.default_prefix,
+        &default_prefix,
         &struct_ident,
         base_tag,
     );
     // the prefixed instantiation starts from the prefix it was called with
-    let prefixed = ResolvedTag::new(
-        attrs.prefix,
-        &attrs.chain,
-        &attrs.default_prefix,
-        &struct_ident,
-        prefixed_tag,
-    );
+    let prefixed = ResolvedTag::new(prefix, &chain, &default_prefix, &struct_ident, prefixed_tag);
 
-    let expanded = substitute(item, base, prefixed, attrs.prefixed_fields);
-    Ok(quote! {
+    let expanded = substitute(item, base, prefixed, prefixed_fields);
+    quote! {
         #[doc = #doc]
         #expanded
-    })
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proc_macro2::Span;
     use quote::format_ident;
     use quote::quote;
-    use syn::parse_quote;
+    use syn::{Ident, parse_quote};
 
+    use crate::clappen_template_impl::{DEFAULT_BASE_TAG, DEFAULT_PREFIXED_TAG};
     use crate::helper::{parse_literal, prefix::DefaultPrefix};
 
     fn ident(name: &str) -> Ident {
@@ -89,25 +77,14 @@ mod tests {
     // Attributes as the clappen macro forwards them: struct_ident set, one prefixed field `url`
     fn attributes(struct_ident: &str, prefix: StructPrefix) -> attrs::Attributes {
         attrs::Attributes {
-            struct_ident: Some(ident(struct_ident)),
+            struct_ident: ident(struct_ident),
             prefix,
             prefixed_fields: vec![format_ident!("url")],
-            ..Default::default()
+            default_prefix: DefaultPrefix::default(),
+            base_tag: ident(DEFAULT_BASE_TAG),
+            prefixed_tag: ident(DEFAULT_PREFIXED_TAG),
+            chain: Vec::new(),
         }
-    }
-
-    #[test]
-    fn expand_template_impl_requires_struct_ident() {
-        let item: ItemImpl = parse_quote! {
-            impl From<Prefixed> for Base {
-                fn from(value: Prefixed) -> Self { Self { url: value.url } }
-            }
-        };
-        let err = expand_template_impl(item, attrs::Attributes::default()).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "clappen_template_impl requires `struct_ident`"
-        );
     }
 
     #[test]
@@ -120,8 +97,7 @@ mod tests {
                 fn b(value: Base) -> Self { Self { url: value.url } }
             }
         };
-        let out =
-            expand_template_impl(item, attributes("ServerOptions", struct_prefix("svc"))).unwrap();
+        let out = expand_template_impl(item, attributes("ServerOptions", struct_prefix("svc")));
 
         let expected = quote! {
             #[doc = " Template impl for `ServerOptions` (prefix 'svc', nested via [])"]
@@ -140,8 +116,7 @@ mod tests {
                 fn from(value: Prefixed) -> Self { Self { url: value.url } }
             }
         };
-        let out =
-            expand_template_impl(item, attributes("ServerOptions", struct_prefix("svc"))).unwrap();
+        let out = expand_template_impl(item, attributes("ServerOptions", struct_prefix("svc")));
 
         // Base -> the bare struct, Prefixed -> the prefixed struct, the `Prefixed` binding's
         // field read is prefixed, and the `Self` (Base) literal keeps the unprefixed field
@@ -164,8 +139,8 @@ mod tests {
             }
         };
         let attrs = attrs::Attributes {
-            base_tag: Some(ident("Src")),
-            prefixed_tag: Some(ident("Dst")),
+            base_tag: ident("Src"),
+            prefixed_tag: ident("Dst"),
             ..attributes("ServerOptions", struct_prefix("svc"))
         };
 
@@ -179,7 +154,7 @@ mod tests {
             }
         };
         assert_eq!(
-            expand_template_impl(item, attrs).unwrap().to_string(),
+            expand_template_impl(item, attrs).to_string(),
             expected.to_string()
         );
     }
@@ -201,7 +176,7 @@ mod tests {
             ..attributes("Db", StructPrefix::default())
         };
 
-        let out = expand_template_impl(item, attrs).unwrap();
+        let out = expand_template_impl(item, attrs);
 
         // base (Self) is the struct's own standalone type (chain ignored); prefixed walks the
         // chain to the nested type and prefixes the field read
