@@ -1,9 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream, Result};
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Ident, Path, Token, Type};
 
+use crate::clappen_struct::{FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY};
 use crate::helper::{
     self, PREFIX_ATTR,
     prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix},
@@ -38,10 +40,12 @@ pub(crate) struct Attributes {
     pub prefix: CommandPrefix,
 }
 
-impl TryFrom<Vec<NestedAttribute>> for Attributes {
-    type Error = ();
+// `apply` is mandatory, `prefix` is not, so a built `Attributes` always carries a macro to call
+impl Parse for Attributes {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let span = input.span();
+        let fields = Punctuated::<NestedAttribute, Token![,]>::parse_terminated(input)?;
 
-    fn try_from(fields: Vec<NestedAttribute>) -> std::result::Result<Self, Self::Error> {
         let mut apply = None;
         let mut prefix = None;
 
@@ -53,7 +57,14 @@ impl TryFrom<Vec<NestedAttribute>> for Attributes {
         }
 
         Ok(Attributes {
-            apply: apply.ok_or(())?,
+            apply: apply.ok_or_else(|| {
+                syn::Error::new(
+                    span,
+                    format!(
+                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided"
+                    ),
+                )
+            })?,
             prefix: prefix.unwrap_or_default(),
         })
     }

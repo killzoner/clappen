@@ -24,10 +24,7 @@ use syn::{ItemImpl, ItemMod, ItemStruct, parse_macro_input};
 #[proc_macro_attribute]
 pub fn __clappen_struct(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle attributes
-    let cloned_args = args.clone();
-    let mut attrs = clappen_struct::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
+    let attrs = parse_macro_input!(args as clappen_struct::attrs::Attributes);
 
     // handle fields
     let mut item = parse_macro_input!(target as ItemStruct);
@@ -47,10 +44,7 @@ pub fn __clappen_struct(args: TokenStream, target: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle attributes
-    let cloned_args = args.clone();
-    let mut attrs = clappen_impl::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
+    let attrs = parse_macro_input!(args as clappen_impl::attrs::Attributes);
 
     // handle fields
     let mut item = parse_macro_input!(target as ItemImpl);
@@ -84,9 +78,7 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 pub fn clappen(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle attributes
     let cloned_args = args.clone();
-    let mut attrs = clappen::attrs::Attributes::default();
-    let attrs_parser = syn::meta::parser(|meta| attrs.parse(meta));
-    parse_macro_input!(cloned_args with attrs_parser);
+    let attrs = parse_macro_input!(cloned_args as clappen::attrs::Attributes);
 
     // handle mod definition
     let target2: proc_macro2::TokenStream = target.clone().into();

@@ -1,10 +1,9 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
-use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Ident, ItemStruct, Token, Type};
+use syn::{Ident, ItemStruct, Type};
 
-use crate::clappen_command::{self, attrs::NestedAttribute};
+use crate::clappen_command;
 use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN,
     FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, ProcessItem,
@@ -33,7 +32,6 @@ impl ProcessItem for ItemStruct {
         for field in self.fields.iter_mut() {
             // handle clappen_command arguments
             let mut command_clap_flatten = false;
-            let mut clappen_command = false;
             let mut clappen_command_attributes: Option<clappen_command::attrs::Attributes> = None;
 
             // Check that we don't have a clap flatten without config
@@ -51,33 +49,15 @@ impl ProcessItem for ItemStruct {
 
                 // parse clappen_command arguments
                 if attr.path().is_ident(FIELD_ATTR_CLAPPEN_COMMAND) {
-                    clappen_command = true;
-
-                    let meta: Punctuated<NestedAttribute, Token![,]> =
-                        attr.parse_args_with(Punctuated::parse_terminated)?;
-                    let meta: Vec<NestedAttribute> = meta.into_iter().collect();
-
-                    let attrs: std::result::Result<clappen_command::attrs::Attributes, ()> =
-                        meta.try_into();
-
-                    clappen_command_attributes = attrs.ok();
+                    clappen_command_attributes = Some(attr.parse_args()?);
                 }
             }
 
-            if command_clap_flatten && !clappen_command {
+            if command_clap_flatten && clappen_command_attributes.is_none() {
                 return Err(syn::Error::new(
                     field.span(),
                     format!(
                         "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[command(flatten)] is provided for clap",
-                    ),
-                ));
-            }
-
-            if clappen_command && clappen_command_attributes.is_none() {
-                return Err(syn::Error::new(
-                    field.span(),
-                    format!(
-                        "'{FIELD_ATTR_CLAPPEN_COMMAND_APPLY}' must be specified when #[{FIELD_ATTR_CLAPPEN_COMMAND}] is provided",
                     ),
                 ));
             }
