@@ -1,9 +1,11 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Ident, ItemStruct, Type};
+use syn::{Ident, ItemStruct};
 
-use crate::clappen_command::{self, FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY};
+use crate::clappen_command::{
+    self, FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY, attrs::NestedStruct,
+};
 use crate::clappen_struct::{
     FIELD_ATTR_CLAP_FLATTEN_COMMAND, FIELD_ATTR_CLAP_FLATTEN_COMMAND_FLATTEN, attrs,
 };
@@ -73,34 +75,21 @@ pub(crate) fn expand(mut item: ItemStruct, attrs: attrs::Attributes) -> syn::Res
         // Handle nested field definitions with macro uses.
         if let (Some(command_attrs), Some(field_ident)) = (clappen_command_attributes, &field.ident)
         {
-            let (new_macro_call, new_type_full) = command_attrs.nested_macro_call(
+            let NestedStruct {
+                new_macro_call,
+                new_type,
+            } = command_attrs.nested_macro_call(
                 &default_prefix,
                 &struct_prefix,
                 field_ident,
                 &field.ty,
-            );
+            )?;
 
             nested_macro_calls.push(new_macro_call);
             nested_macro_uses.push(command_attrs);
 
             // replace field type with new type
-            let ty: Result<Type, syn::Error> = syn::parse2(new_type_full);
-            match ty {
-                Ok(ty) => {
-                    field.ty = ty;
-                }
-                Err(e) => {
-                    return Err(syn::Error::new(
-                        field.ty.span(),
-                        format!(
-                            "{}: unable to rewrite field '{}' type '{}' to new type",
-                            e,
-                            field.ident.to_token_stream(),
-                            field.ty.to_token_stream(),
-                        ),
-                    ));
-                }
-            }
+            field.ty = new_type;
         }
     }
 
