@@ -3,7 +3,7 @@ use syn::spanned::Spanned;
 use syn::{Ident, Result};
 
 use crate::helper::{
-    self, DEFAULT_PREFIX_ATTR, PREFIX_ATTR,
+    self, DEFAULT_PREFIX_ATTR, PREFIX_ATTR, PREFIXED_FIELDS_ATTR,
     prefix::{DefaultPrefix, StructPrefix},
 };
 
@@ -26,7 +26,7 @@ impl Parse for Attributes {
 
             match ident.to_string().as_str() {
                 PREFIX_ATTR => prefix = meta.value()?.parse()?,
-                "prefixed_fields" => prefixed_fields = helper::parse_bracketed(&meta)?,
+                PREFIXED_FIELDS_ATTR => prefixed_fields = helper::parse_bracketed(&meta)?,
                 DEFAULT_PREFIX_ATTR => default_prefix = meta.value()?.parse()?,
                 _ => return Err(syn::Error::new(ident.span(), "unknown attribute")),
             };

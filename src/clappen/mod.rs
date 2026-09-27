@@ -7,6 +7,9 @@ use crate::helper::PrefixValue;
 
 pub(crate) mod attrs;
 
+// Constant
+const EXPORT_ATTR: &str = "export";
+
 pub(crate) fn create_template(
     args: TokenStream,
     attrs: Attributes,
