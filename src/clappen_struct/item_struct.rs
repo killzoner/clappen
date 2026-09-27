@@ -113,7 +113,7 @@ pub(crate) fn expand(mut item: ItemStruct, attrs: attrs::Attributes) -> syn::Res
 
     let debug_nested_macro_uses: Vec<_> = nested_macro_uses
         .iter()
-        .map(|e: &clappen_command::attrs::Attributes| e.apply.to_string())
+        .map(|e: &clappen_command::attrs::Attributes| e.apply.to_token_stream().to_string())
         .collect();
 
     let debug_nested_macro_uses = debug_nested_macro_uses.join(",");
