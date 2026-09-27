@@ -3,7 +3,7 @@ use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Ident, Path, Token, Type};
+use syn::{Ident, Path, Token, Type, parse_quote};
 
 use crate::clappen_command::{FIELD_ATTR_CLAPPEN_COMMAND, FIELD_ATTR_CLAPPEN_COMMAND_APPLY};
 use crate::helper::{
@@ -87,6 +87,12 @@ impl Parse for Attributes {
     }
 }
 
+// a nested struct: its macro call and its type
+pub(crate) struct NestedStruct {
+    pub new_macro_call: TokenStream,
+    pub new_type: Type,
+}
+
 impl Attributes {
     pub(crate) fn nested_macro_call(
         &self,
@@ -94,50 +100,45 @@ impl Attributes {
         struct_prefix: &StructPrefix,
         field_ident: &Ident,
         field_type: &Type,
-    ) -> (TokenStream, TokenStream) {
+    ) -> Result<NestedStruct> {
         let apply = &self.apply;
         let nested_prefix = NestedPrefix::new(&self.prefix, default_prefix, struct_prefix);
         let module_name = helper::macro_module_name(&field_ident.to_string());
-        let new_type_full_ref =
-            Self::new_full_type_definition(&module_name, &nested_prefix, field_type);
+        let new_type = Self::new_full_type_definition(&module_name, &nested_prefix, field_type)?;
 
-        (
-            quote! {
+        Ok(NestedStruct {
+            new_macro_call: quote! {
                     pub(crate) mod #module_name {
                         #apply!(#nested_prefix);
                     }
             },
-            new_type_full_ref,
-        )
+            new_type,
+        })
     }
 
     fn new_full_type_definition(
         module_name: &Ident,
         nested_prefix: &NestedPrefix,
         field_type: &Type,
-    ) -> TokenStream {
+    ) -> Result<Type> {
         // allow for fully qualified type notation, needed for $crate::something
         let field_type: Ident = match &field_type {
             Type::Path(e) => match e.path.segments.last() {
                 Some(e) => e.ident.to_owned().clone(),
                 None => {
-                    return syn::Error::new(
+                    return Err(syn::Error::new(
                         field_type.span(),
                         format!("cannot get ident out of {}", field_type.to_token_stream()),
-                    )
-                    .into_compile_error();
+                    ));
                 }
             },
-            _ => {
-                return syn::Error::new(field_type.span(), "unknown attribute")
-                    .into_compile_error();
-            }
+            _ => return Err(syn::Error::new(field_type.span(), "unknown attribute")),
         };
 
         let field_type = nested_prefix.type_ident(&field_type.to_string());
 
-        quote! {
+        Ok(parse_quote! {
             #module_name::#field_type
-        }
+        })
     }
 }
