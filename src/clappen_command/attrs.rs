@@ -11,9 +11,31 @@ use crate::helper::{
     prefix::{CommandPrefix, DefaultPrefix, NestedPrefix, StructPrefix},
 };
 
+// the macro applied, optionally with `$crate` notation
+pub(crate) struct ApplyPath {
+    dollar: Option<Token![$]>,
+    path: Path,
+}
+
+impl Parse for ApplyPath {
+    fn parse(input: ParseStream) -> Result<Self> {
+        Ok(Self {
+            dollar: input.parse()?,
+            path: input.parse()?,
+        })
+    }
+}
+
+impl ToTokens for ApplyPath {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let Self { dollar, path } = self;
+        tokens.extend(quote! { #dollar #path });
+    }
+}
+
 // One `name = value` pair. `syn::meta::parser` would need owned tokens and lose the error span.
 enum NestedAttribute {
-    Apply(TokenStream),
+    Apply(ApplyPath),
     Prefix(CommandPrefix),
 }
 
@@ -24,12 +46,7 @@ impl Parse for NestedAttribute {
         let _eq_token: Token![=] = input.parse()?;
 
         match keyword.to_string().as_str() {
-            FIELD_ATTR_CLAPPEN_COMMAND_APPLY => {
-                // parsed as a path, kept as tokens: `$crate::child` needs the `$`
-                let dollar: Option<Token![$]> = input.parse()?;
-                let path: Path = input.parse()?;
-                Ok(NestedAttribute::Apply(quote! { #dollar #path }))
-            }
+            FIELD_ATTR_CLAPPEN_COMMAND_APPLY => Ok(NestedAttribute::Apply(input.parse()?)),
             PREFIX_ATTR => Ok(NestedAttribute::Prefix(input.parse()?)),
             _ => Err(syn::Error::new(keyword.span(), "unknown attribute")),
         }
@@ -37,7 +54,7 @@ impl Parse for NestedAttribute {
 }
 
 pub(crate) struct Attributes {
-    pub apply: TokenStream,
+    pub apply: ApplyPath,
     pub prefix: CommandPrefix,
 }
 
