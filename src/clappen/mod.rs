@@ -1,7 +1,7 @@
 use attrs::Attributes;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Item;
+use syn::{Item, Result};
 
 use crate::helper::PrefixValue;
 
@@ -10,11 +10,11 @@ pub(crate) mod attrs;
 // Constant
 const EXPORT_ATTR: &str = "export";
 
-pub(crate) fn create_template(
+pub(crate) fn expand(
     args: TokenStream,
     attrs: Attributes,
     items: Vec<Item>,
-) -> TokenStream {
+) -> Result<TokenStream> {
     let export_macro = attrs.export;
 
     let default_prefix = attrs.default_prefix.value();
@@ -32,11 +32,10 @@ pub(crate) fn create_template(
         .collect();
 
     if !unknown_items.is_empty() {
-        return syn::Error::new_spanned(
+        return Err(syn::Error::new_spanned(
             &args,
             "clappen support is limited to a single struct with one or more impl/use blocks",
-        )
-        .to_compile_error();
+        ));
     }
 
     let use_items: Vec<_> = items
@@ -55,17 +54,11 @@ pub(crate) fn create_template(
         })
         .collect();
 
-    if struct_defs.len() > 1 {
-        return syn::Error::new_spanned(&args, "clappen must have a unique struct definition")
-            .to_compile_error();
-    }
-
-    let struct_def = match struct_defs.first() {
-        Some(e) => e,
-        None => {
-            return syn::Error::new_spanned(&args, "clappen must have a unique struct definition")
-                .to_compile_error();
-        }
+    let [struct_def] = struct_defs.as_slice() else {
+        return Err(syn::Error::new_spanned(
+            &args,
+            "clappen must have a unique struct definition",
+        ));
     };
 
     let items_impl: Vec<_> = items
@@ -117,7 +110,7 @@ pub(crate) fn create_template(
         }
     };
 
-    quote! {
+    Ok(quote! {
         #[macro_export]
         macro_rules! #export_macro {
             () => {
@@ -130,5 +123,5 @@ pub(crate) fn create_template(
                 #(#prefixed_item_impls)*
             };
         }
-    }
+    })
 }

@@ -78,5 +78,7 @@ pub fn clappen(args: TokenStream, target: TokenStream) -> TokenStream {
     let cloned_args = args.clone();
     let attrs = parse_macro_input!(cloned_args as clappen::attrs::Attributes);
 
-    clappen::create_template(args.into(), attrs, items).into()
+    clappen::expand(args.into(), attrs, items)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
