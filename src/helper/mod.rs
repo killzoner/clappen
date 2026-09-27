@@ -9,6 +9,7 @@ pub(crate) mod prefix;
 // the prefix attribute keys, used by the parsers and by the error messages
 pub(crate) const PREFIX_ATTR: &str = "prefix";
 pub(crate) const DEFAULT_PREFIX_ATTR: &str = "default_prefix";
+pub(crate) const PREFIXED_FIELDS_ATTR: &str = "prefixed_fields";
 
 // the value of a prefix, which is None when the prefix is empty
 pub(crate) trait PrefixValue {

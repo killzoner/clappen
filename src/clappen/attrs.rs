@@ -3,6 +3,7 @@ use syn::parse::{Parse, ParseStream, Parser};
 use syn::spanned::Spanned;
 use syn::{Ident, Result};
 
+use crate::clappen::EXPORT_ATTR;
 use crate::helper::{DEFAULT_PREFIX_ATTR, prefix::DefaultPrefix};
 
 pub(crate) struct Attributes {
@@ -24,7 +25,7 @@ impl Parse for Attributes {
             };
 
             match ident.to_string().as_str() {
-                "export" => export = Some(meta.value()?.parse()?),
+                EXPORT_ATTR => export = Some(meta.value()?.parse()?),
                 DEFAULT_PREFIX_ATTR => default_prefix = meta.value()?.parse()?,
                 _ => return Err(syn::Error::new(ident.span(), "unknown attribute")),
             };
@@ -34,7 +35,10 @@ impl Parse for Attributes {
         .parse2(args.clone())?;
 
         let export = export.ok_or_else(|| {
-            syn::Error::new_spanned(&args, "clappen 'export' attribute not found")
+            syn::Error::new_spanned(
+                &args,
+                format!("clappen '{EXPORT_ATTR}' attribute not found"),
+            )
         })?;
 
         Ok(Self {
