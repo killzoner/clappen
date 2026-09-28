@@ -21,7 +21,7 @@ pub(crate) fn expand(
     // no key when the module has no default prefix
     let default_prefix_arg = default_prefix
         .as_ref()
-        .map(|e| quote! { , default_prefix = #e });
+        .map(|e| quote! { default_prefix = #e });
 
     let unknown_items: Vec<_> = items
         .iter()
@@ -69,13 +69,14 @@ pub(crate) fn expand(
         })
         .collect();
 
+    // struct field idents, forwarded to the prefixing macros
     let fields: Vec<_> = struct_def.fields.iter().flat_map(|e| &e.ident).collect();
 
     let prefixed_item_impls: Vec<_> = items_impl
         .iter()
         .map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields),*] #default_prefix_arg)]
+                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields),*], #default_prefix_arg)]
                 #e
             }
         })
@@ -85,7 +86,7 @@ pub(crate) fn expand(
         .iter()
         .map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefixed_fields = [#(#fields),*] #default_prefix_arg)]
+                #[clappen::__clappen_impl(prefixed_fields = [#(#fields),*], #default_prefix_arg)]
                 #e
             }
         })
@@ -121,7 +122,7 @@ pub(crate) fn expand(
             };
             ($prefix: literal) => {
                 #(#use_items)*
-                #[clappen::__clappen_struct(prefix = $prefix #default_prefix_arg)]
+                #[clappen::__clappen_struct(prefix = $prefix, #default_prefix_arg)]
                 #struct_def
                 #(#prefixed_item_impls)*
             };
