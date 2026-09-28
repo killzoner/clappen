@@ -110,7 +110,10 @@ pub(crate) fn expand(
         }
     };
 
+    let macro_doc = " Invoke with `()` for the base struct, or `(\"prefix\")` for a prefixed copy.";
+
     Ok(quote! {
+        #[doc = #macro_doc]
         #[macro_export]
         macro_rules! #export_macro {
             () => {
