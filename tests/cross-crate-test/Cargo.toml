@@ -1,0 +1,9 @@
+[package]
+edition = "2024"
+name = "cross-crate-test"
+publish = false
+version = "0.0.0"
+
+# cargo allows a cycle that includes a dev-dependency
+[dependencies]
+clappen = { path = "../.." }
