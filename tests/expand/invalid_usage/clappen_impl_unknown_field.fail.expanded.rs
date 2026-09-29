@@ -9,7 +9,7 @@ fn main() {
         ///
         test_config: Option<bool>,
     }
-    /// Fields with prefix: [unknown,config]
+    /// Fields with prefix: [config]
     impl TestServerOptions {
         /// A function.
         ///

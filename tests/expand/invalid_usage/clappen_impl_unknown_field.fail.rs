@@ -11,7 +11,7 @@ fn main(){
         config: Option<bool>,
     }
 
-    #[clappen::__clappen_impl(prefix = "test", prefixed_fields = [unknown, config])]
+    #[clappen::__clappen_impl(prefix = "test", prefixed_fields = [config])]
     impl ServerOptions {
         /// A function.
         ///
