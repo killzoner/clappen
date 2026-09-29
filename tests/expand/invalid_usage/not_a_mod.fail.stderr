@@ -1,5 +1,5 @@
-error: expected `mod`
+error: clappen must be used on mod only
  --> tests/expand/invalid_usage/not_a_mod.fail.rs:2:1
   |
 2 | fn options() {}
-  | ^^
+  | ^^^^^^^^^^^^^^^
