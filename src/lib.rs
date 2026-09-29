@@ -18,7 +18,7 @@ mod clappen_struct;
 mod helper;
 
 use proc_macro::TokenStream;
-use syn::{ItemImpl, ItemMod, ItemStruct, parse_macro_input};
+use syn::{Item, ItemImpl, ItemMod, ItemStruct, parse_macro_input};
 
 #[doc(hidden)]
 #[proc_macro_attribute]
@@ -65,14 +65,16 @@ pub fn __clappen_impl(args: TokenStream, target: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn clappen(args: TokenStream, target: TokenStream) -> TokenStream {
     // handle mod definition
-    let target2: proc_macro2::TokenStream = target.clone().into();
-    let Some(content) = parse_macro_input!(target as ItemMod).content else {
-        return syn::Error::new_spanned(target2, "clappen must be used on mod only")
+    let item = parse_macro_input!(target as Item);
+    let Item::Mod(ItemMod {
+        content: Some((_, items)),
+        ..
+    }) = item
+    else {
+        return syn::Error::new_spanned(item, "clappen must be used on mod only")
             .into_compile_error()
             .into();
     };
-
-    let items = content.1;
 
     // handle attributes
     let cloned_args = args.clone();
