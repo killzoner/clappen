@@ -1,3 +1,5 @@
+use clap::Parser;
+
 #[derive(Debug, Clone)]
 pub struct NestedServerConfig {
     pub inner: ServerConfig,
