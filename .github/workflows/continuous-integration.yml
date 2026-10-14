@@ -45,7 +45,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: taiki-e/install-action@v2 # don't use taiki-e/cache-cargo-install-action, compiled version already available (https://github.com/taiki-e/install-action/blob/main/TOOLS.md)
         with:
-          tool: cargo-expand@1.0.126 # TODO: remove when cargo-expand/macrotest is fixed
+          tool: cargo-expand
       - run: cargo test
   fmt:
     runs-on: ubuntu-latest
