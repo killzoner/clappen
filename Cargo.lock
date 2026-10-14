@@ -107,6 +107,7 @@ version = "0.1.6"
 dependencies = [
  "clap",
  "cross-crate-test",
+ "glob",
  "macrotest",
  "paste",
  "proc-macro2",

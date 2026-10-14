@@ -35,6 +35,7 @@ clap = { version = "4.6.1", default-features = false, features = [
   "usage",
 ] }
 cross-crate-test = { path = "tests/cross-crate-test", default-features = false }
+glob = { version = "0.3.3", default-features = false }
 macrotest = { version = "1.2.1", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 trybuild = { version = "1.0.116", default-features = false, features = [
