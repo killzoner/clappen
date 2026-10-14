@@ -1,12 +1,8 @@
-use clap::Parser;
-
-#[derive(Debug, Clone)]
 pub struct NestedServerConfig {
     pub inner: ServerConfig,
     pub name: String,
 }
 
-#[derive(Debug, Clone)]
 pub struct ServerConfig {
     pub url: String,
     pub say_hello: bool,
@@ -84,31 +80,4 @@ cli_nested_config_with_prefix!(Bis);
 // define second nested config struct with prefix Bis.
 cli_nested_config_with_prefix!(Third);
 
-#[derive(Parser, Debug, Clone)]
-#[command(version, about)]
-struct Cli {
-    #[command(flatten)]
-    config: NestedStructOptions,
-
-    #[command(flatten)]
-    cli_bis: BisNestedStructOptions,
-
-    #[command(flatten)]
-    cli_third: ThirdNestedStructOptions,
-}
-
-// cargo run --example paste -- --help
-// cargo run --example paste -- --nested-name="nested name" --nested-url="nested url" --bis-name="bis name" --bis-url="bis url" --third-name="third name" --third-url="third url"
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = Cli::parse();
-
-    let config = cli.config.new_nested_config();
-    let config_bis = cli.cli_bis.new_nested_config();
-    let config_third = cli.cli_third.new_nested_config();
-
-    println!("Config {:?}", config);
-    println!("Config bis {:?}", config_bis);
-    println!("Config third {:?}", config_third);
-
-    Ok(())
-}
+fn main() {}
