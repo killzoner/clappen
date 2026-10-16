@@ -5,7 +5,6 @@ fn expandtest() {
     t.compile_fail("tests/**/*.fail.rs");
 
     let args = &["--all-features"];
-    // TODO: remove glob matching if https://github.com/eupn/macrotest/pull/141 gets merged
     macrotest::expand_args("tests/expand/**/*.pass.rs", args);
 }
 
