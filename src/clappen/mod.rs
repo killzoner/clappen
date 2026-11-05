@@ -17,12 +17,6 @@ pub(crate) fn expand(
 ) -> Result<TokenStream> {
     let export_macro = attrs.export;
 
-    let default_prefix = attrs.default_prefix.value();
-    // no key when the module has no default prefix
-    let default_prefix_arg = default_prefix
-        .as_ref()
-        .map(|e| quote! { default_prefix = #e });
-
     let unknown_items: Vec<_> = items
         .iter()
         .flat_map(|e| match e {
@@ -72,44 +66,24 @@ pub(crate) fn expand(
     // struct field idents, forwarded to the prefixing macros
     let fields: Vec<_> = struct_def.fields.iter().flat_map(|e| &e.ident).collect();
 
-    let prefixed_item_impls: Vec<_> = items_impl
-        .iter()
-        .map(|e| {
+    let arm_body = |attribute_prefix: TokenStream| {
+        let default_prefix = attrs.default_prefix.value().as_slice();
+        let item_impls = items_impl.iter().map(|e| {
             quote! {
-                #[clappen::__clappen_impl(prefix = $prefix, prefixed_fields = [#(#fields),*], #default_prefix_arg)]
+                #[clappen::__clappen_impl(#attribute_prefix #(default_prefix = #default_prefix,)* prefixed_fields = [#(#fields),*])]
                 #e
             }
-        })
-        .collect();
+        });
 
-    let default_item_impls: Vec<_> = items_impl
-        .iter()
-        .map(|e| {
-            quote! {
-                #[clappen::__clappen_impl(prefixed_fields = [#(#fields),*], #default_prefix_arg)]
-                #e
-            }
-        })
-        .collect();
-
-    let default = match default_prefix {
-        None => {
-            quote! {
-                #(#use_items)*
-                #[clappen::__clappen_struct]
-                #struct_def
-                #(#default_item_impls)*
-            }
-        }
-        Some(default_prefix) => {
-            quote! {
-                #(#use_items)*
-                #[clappen::__clappen_struct(default_prefix = #default_prefix)]
-                #struct_def
-                #(#default_item_impls)*
-            }
+        quote! {
+            #(#use_items)*
+            #[clappen::__clappen_struct(#attribute_prefix #(default_prefix = #default_prefix,)*)]
+            #struct_def
+            #(#item_impls)*
         }
     };
+    let base_struct = arm_body(TokenStream::new());
+    let prefixed_struct = arm_body(quote! { prefix = $prefix, });
 
     let macro_doc = " Invoke with `()` for the base struct, or `(\"prefix\")` for a prefixed copy.";
 
@@ -118,13 +92,10 @@ pub(crate) fn expand(
         #[macro_export]
         macro_rules! #export_macro {
             () => {
-                #default
+                #base_struct
             };
             ($prefix: literal) => {
-                #(#use_items)*
-                #[clappen::__clappen_struct(prefix = $prefix, #default_prefix_arg)]
-                #struct_def
-                #(#prefixed_item_impls)*
+                #prefixed_struct
             };
         }
     })
